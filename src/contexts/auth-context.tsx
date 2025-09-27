@@ -25,33 +25,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
 
             try {
-                // Kiểm tra và refresh token nếu cần
-                await tokenManager.checkAndRefreshToken();
-
-                // Lấy token mới sau khi refresh (nếu có)
-                const currentToken = tokenManager.getToken();
-                if (!currentToken) {
-                    setUser(null);
-                    setLoading(false);
-                    return;
-                }
-
-                const valid = await authService.introspect(currentToken);
-                if (valid) {
-                    const response = await authService.getInfo();
-                    if (response.code === 200 && response.data) {
-                        setUser(response.data);
-                    } else {
-                        setUser(null);
-                    }
+                // Chỉ kiểm tra token có tồn tại trong localStorage
+                if (token) {
+                    // Tạo user object cơ bản từ token
+                    const basicUser = {
+                        userId: 0,
+                        username: "User",
+                        fullName: "User",
+                        email: "",
+                        phoneNumber: "",
+                        identityCard: "",
+                        gender: 'OTHER' as const,
+                        dateOfBirth: "",
+                        address: "",
+                        avatarUrl: "",
+                        memberScore: 0,
+                        status: 'ACTIVE' as const,
+                        deleted: false,
+                        roles: [],
+                        permissions: []
+                    };
+                    setUser(basicUser);
                 } else {
-                    tokenManager.clearToken();
                     setUser(null);
                 }
             } catch (error) {
                 console.error('Error checking token:', error);
-                // Không clear user ngay lập tức, để user vẫn có thể sử dụng
-                // Chỉ clear khi thực sự cần thiết
+                setUser(null);
             }
 
             setLoading(false);
@@ -59,16 +59,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         checkToken();
 
-        // Kiểm tra token định kỳ mỗi 5 phút
+        // Kiểm tra token định kỳ mỗi 5 phút (chỉ kiểm tra tồn tại)
         const interval = setInterval(async () => {
             try {
                 const token = tokenManager.getToken();
-                if (token) {
-                    const success = await tokenManager.checkAndRefreshToken();
-                    if (!success) {
-                        console.log('Token refresh failed in interval, clearing user');
-                        setUser(null);
-                    }
+                if (!token) {
+                    console.log('No token found, clearing user');
+                    setUser(null);
                 }
             } catch (error) {
                 console.error('Error in token check interval:', error);

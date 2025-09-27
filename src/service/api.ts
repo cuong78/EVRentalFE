@@ -28,7 +28,7 @@ export const apiPublicClient = axios.create({
 apiClient.interceptors.request.use(
     async (config) => {
         // Chỉ check token cho các request không phải refresh token để tránh vòng lặp vô hạn
-        if (!config.url?.includes('/auth/refresh')) {
+        if (!config.url?.includes('/refresh-token')) {
             try {
                 // Kiểm tra và refresh token nếu cần trước mỗi request
                 await tokenManager.checkAndRefreshToken();

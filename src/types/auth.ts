@@ -1,7 +1,6 @@
 import type { Role } from "./role";
 
 //Register
-export type Gender = "MALE" | "FEMALE";
 export type User = Role;
 
 // export interface AuthContextType {
@@ -37,15 +36,10 @@ export type UserDetails = {
 
 export interface RegisterFormData {
     username: string;
-    fullName: string;
-    dateOfBirth: string;
     email: string;
-    identityCard: string;
     phoneNumber: string;
-    address: string;
     password: string;
     confirmPassword: string;
-    gender: Gender;
 }
 
 export interface RegisterResponse {

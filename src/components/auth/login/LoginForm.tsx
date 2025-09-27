@@ -46,22 +46,22 @@ export const LoginForm = ({ onSuccess, onSwitchToRegister, onSwitchToForgotPassw
     return (
         <div className="max-w-md w-full space-y-8">
             <div>
-                <h2 className="mt-6 text-center text-4xl font-bold text-white">Login</h2>
-                <p className="mt-2 text-center text-sm text-gray-300">Sign in to continue to your account</p>
+                <h2 className="mt-6 text-center text-4xl font-bold text-gray-900">Login</h2>
+                <p className="mt-2 text-center text-sm text-gray-600">Sign in to continue to your account</p>
             </div>
-            <div className="mt-8 bg-black/70 backdrop-blur-sm p-8 rounded-xl shadow-2xl">
+            <div className="mt-8 bg-white p-8 rounded-xl shadow-2xl">
                 <form className="space-y-6" onSubmit={handleSubmit(onSubmit)} autoComplete="off">
                     <div>
-                        <label htmlFor="username" className="block text-sm font-medium text-gray-200">
+                        <label htmlFor="username" className="block text-sm font-medium text-gray-700">
                             Username
                         </label>
                         <div className="mt-1">
                             <input
                                 id="username"
                                 type="text"
-                                className="appearance-none block w-full px-3 py-2 border border-gray-600
-                  rounded-lg bg-gray-900/50 text-gray-200 placeholder-gray-400
-                  focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                className="appearance-none block w-full px-3 py-2 border border-gray-300
+                  rounded-lg bg-white text-gray-900 placeholder-gray-400
+                  focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                                 placeholder="Enter your username"
                                 autoComplete="username"
                                 {...register("username", { required: "Username is required" })}
@@ -71,23 +71,23 @@ export const LoginForm = ({ onSuccess, onSwitchToRegister, onSwitchToForgotPassw
                     </div>
 
                     <div>
-                        <label htmlFor="password" className="block text-sm font-medium text-gray-200">
+                        <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                             Password
                         </label>
                         <div className="mt-1 relative">
                             <input
                                 id="password"
                                 type={showPassword ? "text" : "password"}
-                                className="appearance-none block w-full px-3 py-2 border border-gray-600
-                  rounded-lg bg-gray-900/50 text-gray-200 placeholder-gray-400
-                  focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                className="appearance-none block w-full px-3 py-2 border border-gray-300
+                  rounded-lg bg-white text-gray-900 placeholder-gray-400
+                  focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                                 placeholder="Enter your password"
                                 autoComplete="current-password"
                                 {...register("password", { required: "Password is required" })}
                             />
                             <button
                                 type="button"
-                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400"
+                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500"
                                 onClick={() => setShowPassword((v) => !v)}
                                 tabIndex={-1}
                             >
@@ -102,17 +102,17 @@ export const LoginForm = ({ onSuccess, onSwitchToRegister, onSwitchToForgotPassw
                             <input
                                 id="rememberMe"
                                 type="checkbox"
-                                className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-600 rounded bg-gray-900/50"
+                                className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded bg-white"
                                 {...register("rememberMe")}
                             />
-                            <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-200">
+                            <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-700">
                                 Remember me
                             </label>
                         </div>
                         <div className="text-sm">
                             <a
                                 onClick={onSwitchToForgotPassword}
-                                className="font-medium text-purple-400 hover:text-purple-300">
+                                className="font-medium text-green-600 hover:text-blue-600">
                                 Forgot your password?
                             </a>
                         </div>
@@ -123,9 +123,9 @@ export const LoginForm = ({ onSuccess, onSwitchToRegister, onSwitchToForgotPassw
                             type="submit"
                             disabled={isLoading}
                             className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg
-                text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-indigo-600
-                hover:from-purple-700 hover:to-indigo-700 focus:outline-none focus:ring-2
-                focus:ring-offset-2 focus:ring-purple-500 transform transition-all duration-200
+                text-sm font-medium text-white bg-gradient-to-r from-green-500 to-blue-600
+                hover:from-green-600 hover:to-blue-700 focus:outline-none focus:ring-2
+                focus:ring-offset-2 focus:ring-green-500 transform transition-all duration-200
                 hover:scale-[1.02]"
                         >
                             {isLoading ? <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" /> : "Login"}
@@ -136,20 +136,20 @@ export const LoginForm = ({ onSuccess, onSwitchToRegister, onSwitchToForgotPassw
                 <div className="mt-6">
                     <div className="relative">
                         <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-gray-600" />
+                            <div className="w-full border-t border-gray-200" />
                         </div>
                         <div className="relative flex justify-center text-sm">
-                            <span className="px-2 bg-black/70 text-gray-400">Or continue with</span>
+                            <span className="px-2 bg-white text-gray-500">Or continue with</span>
                         </div>
                     </div>
 
                     <div className="mt-6 grid grid-cols-2 gap-3 ">
                         <button
                             onClick={handleGoogleLogin}
-                            className="cursor-pointer w-full inline-flex justify-center py-2 px-4 border border-gray-600 rounded-lg shadow-sm bg-gray-900/50 hover:bg-gray-800/50 transition-all duration-200">
+                            className="cursor-pointer w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-lg shadow-sm bg-white hover:bg-gray-50 transition-all duration-200">
                             <FcGoogle className="h-5 w-5" />
                         </button>
-                        <button className="w-full inline-flex justify-center py-2 px-4 border border-gray-600 rounded-lg shadow-sm bg-gray-900/50 hover:bg-gray-800/50 transition-all duration-200">
+                        <button className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-lg shadow-sm bg-white hover:bg-gray-50 transition-all duration-200">
                             <BsFacebook className="h-5 w-5 text-blue-500" />
 
                         </button>
@@ -157,12 +157,12 @@ export const LoginForm = ({ onSuccess, onSwitchToRegister, onSwitchToForgotPassw
                 </div>
 
                 <div className="mt-6 text-center">
-                    <p className="text-sm text-gray-400">
+                    <p className="text-sm text-gray-600">
                         Don't have an account?{" "}
                         <button
                             type="button"
                             onClick={onSwitchToRegister}
-                            className="font-medium text-purple-400 hover:text-purple-300"
+                            className="font-medium text-green-600 hover:text-blue-600"
                         >
                             Sign up now
                         </button>

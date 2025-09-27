@@ -1,6 +1,7 @@
 export interface ApiResponses<T>{
     data?: T;
-    code: number;
+    code?: number;
+    statusCode?: number;
     message?: string;
     pagination?: Pagination;
 }
@@ -21,6 +22,7 @@ export function errorResponse<T>(message: string): ApiResponses<T> {
     return {
         data: null as unknown as T,
         code: 500,
+        statusCode: 500,
         message: message
     };
 }

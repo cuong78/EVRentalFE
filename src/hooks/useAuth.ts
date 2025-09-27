@@ -21,11 +21,17 @@ export function useAuth() {
         setIsLoading(true);
         try {
             const response = await authService.register(data);
-            showSuccessToast("Đăng ký thành công!");
+            showSuccessToast(response?.message || "Đăng ký thành công! Vui lòng kiểm tra email của bạn.");
             onSuccess?.();
             return response;
         } catch (error: any) {
-            showErrorToast(error?.message || "Đăng ký thất bại");
+            const status = error?.response?.status;
+            const serverMessage = error?.response?.data?.message;
+            if (status === 409) {
+                showErrorToast(serverMessage || "Tên đăng nhập, email hoặc số điện thoại đã tồn tại");
+            } else {
+                showErrorToast(error?.message || "Đăng ký thất bại");
+            }
             throw error;
         } finally {
             setIsLoading(false);
@@ -42,26 +48,49 @@ export function useAuth() {
                 return null;
             }
 
+            // Lưu token vào localStorage
             localStorage.setItem("token", res.token);
+            
+            // Tạo user object từ token response (không cần gọi API getInfo)
+            const userInfo = {
+                userId: 0, // Sẽ được cập nhật sau khi có API
+                username: data.username,
+                fullName: data.username, // Tạm thời dùng username
+                email: data.username, // Giả sử username là email
+                phoneNumber: "",
+                identityCard: "",
+                gender: 'OTHER' as const,
+                dateOfBirth: "",
+                address: "",
+                avatarUrl: "",
+                memberScore: 0,
+                status: 'ACTIVE' as const,
+                deleted: false,
+                roles: res.roles || [],
+                permissions: []
+            };
 
-            const infoRes = await authService.getInfo();
+            setUser(userInfo);
+            showSuccessToast("Đăng nhập thành công!");
 
-            if (infoRes.code === 200 && infoRes.data) {
-                const userInfo = infoRes.data;
-                setUser(userInfo);
-                showSuccessToast("Đăng nhập thành công!");
-
-                onSuccess?.();
-                if (userInfo.roles[0]?.roleName === "MEMBER" || userInfo == null) navigate("/");
-                else navigate("/admin");
-
-                return userInfo;
+            onSuccess?.();
+            
+            // Chuyển hướng dựa trên role
+            if (res.roles && res.roles.length > 0) {
+                const roleName = res.roles[0].roleName;
+                if (roleName === "MEMBER") {
+                    navigate("/");
+                } else {
+                    navigate("/admin");
+                }
             } else {
-                showErrorToast("Không lấy được thông tin người dùng");
-                return null;
+                navigate("/");
             }
+
+            return userInfo;
         } catch (error: any) {
-            showErrorToast(error?.message || "Đăng nhập thất bại");
+            const errorMessage = error?.response?.data?.message || error?.message || "Đăng nhập thất bại";
+            showErrorToast(errorMessage);
             throw error;
         } finally {
             setIsLoading(false);
@@ -100,16 +129,8 @@ export function useAuth() {
     };
 
     const getMyInfo = async () => {
-        try {
-            const response = await authService.getInfo();
-            if (response.code === 200 && response.data) {
-                setUser(response.data);
-            } else {
-                showErrorToast(response.message || "Lấy thông tin người dùng thất bại");
-            }
-        } catch (error) {
-            showErrorToast("Lỗi khi lấy thông tin người dùng");
-        }
+        // Không cần gọi API getInfo nữa
+        console.log("getMyInfo called but no API available");
     }
     const loginWithGoogle = async (code: string) => {
         setIsLoading(true);
@@ -119,7 +140,26 @@ export function useAuth() {
                 const token = response.data.token;
                 localStorage.setItem("token", token);
                 console.log(token);
-                await getMyInfo();
+                
+                // Tạo user object cơ bản
+                const basicUser = {
+                    userId: 0,
+                    username: "Google User",
+                    fullName: "Google User",
+                    email: "",
+                    phoneNumber: "",
+                    identityCard: "",
+                    gender: 'OTHER' as const,
+                    dateOfBirth: "",
+                    address: "",
+                    avatarUrl: "",
+                    memberScore: 0,
+                    status: 'ACTIVE' as const,
+                    deleted: false,
+                    roles: response.data.roles || [],
+                    permissions: []
+                };
+                setUser(basicUser);
                 return true;
             }
             return false;
