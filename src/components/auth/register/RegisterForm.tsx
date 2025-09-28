@@ -19,10 +19,11 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({onSwitchToLogin}) => 
     } = useForm<RegisterFormData>({
         defaultValues: {
             username: "",
-            email: "",
-            phoneNumber: "",
             password: "",
             confirmPassword: "",
+            email: "",
+            phone: "",
+
         },
     });
 
@@ -42,7 +43,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({onSwitchToLogin}) => 
                     const msg = Array.isArray(val) ? (val[0] as string) : (val as string);
                     if (key === 'username') setError('username', { message: msg });
                     if (key === 'email') setError('email', { message: msg });
-                    if (key === 'phone' || key === 'phoneNumber') setError('phoneNumber', { message: msg });
+                    if (key === 'phone' || key === 'phone') setError('phone', { message: msg });
                     if (key === 'password') setError('password', { message: msg });
                     if (key === 'confirmPassword') setError('confirmPassword', { message: msg });
                 });
@@ -53,7 +54,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({onSwitchToLogin}) => 
                 const msg = serverMessage;
                 if (/user(name)?/i.test(msg)) setError('username', { message: msg });
                 else if (/email/i.test(msg)) setError('email', { message: msg });
-                else if (/phone|số\s*điện\s*thoại|phoneNumber/i.test(msg)) setError('phoneNumber', { message: msg });
+                else if (/phone|số\s*điện\s*thoại|phone/i.test(msg)) setError('phone', { message: msg });
                 else if (/password/i.test(msg)) setError('password', { message: msg });
                 else setError('username', { message: msg });
             }
@@ -132,13 +133,13 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({onSwitchToLogin}) => 
 
                     {/* Phone Number Field */}
                     <div>
-                            <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700">
+                            <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
                                 Số điện thoại
                             </label>
                             <div className="mt-1">
                                 <input
-                                    id="phoneNumber"
-                                    {...register("phoneNumber", {
+                                    id="phone"
+                                    {...register("phone", {
                                         required: "Số điện thoại là bắt buộc",
                                         pattern: {
                                             value: /^0\d{9,}$/,
@@ -152,8 +153,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({onSwitchToLogin}) => 
                                     placeholder="Nhập số điện thoại"
                                     autoComplete="tel"
                                 />
-                                {errors.phoneNumber && (
-                                    <p className="mt-2 text-sm text-red-500">{errors.phoneNumber.message}</p>
+                                {errors.phone && (
+                                    <p className="mt-2 text-sm text-red-500">{errors.phone.message}</p>
                                 )}
                             </div>
                         </div>
