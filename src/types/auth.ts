@@ -37,7 +37,7 @@ export type UserDetails = {
 export interface RegisterFormData {
     username: string;
     email: string;
-    phoneNumber: string;
+    phone: string;
     password: string;
     confirmPassword: string;
 }

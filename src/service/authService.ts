@@ -18,7 +18,7 @@ export const authService = {
             password: data.password,
             confirmPassword: data.confirmPassword,
             email: data.email,
-            phone: data.phoneNumber,
+            phone: data.phone,
         };
 
         try {
