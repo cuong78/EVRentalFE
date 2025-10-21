@@ -1,5 +1,6 @@
 import React from 'react';
 import { Car, MapPin } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 type Station = { id: number; name: string; address: string; available: number; total: number; distance: string };
 
@@ -10,6 +11,12 @@ interface HeroSectionProps {
 }
 
 const HeroSection: React.FC<HeroSectionProps> = ({ activeTab, onChangeTab, stations }) => {
+	const navigate = useNavigate();
+
+	const handleRentNow = () => {
+		navigate('thue-xe');
+	};
+
 	return (
 		<section className="relative py-20 overflow-hidden">
 			<div className="absolute inset-0 bg-gradient-to-r from-green-600/10 to-blue-600/10"></div>
@@ -23,7 +30,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ activeTab, onChangeTab, stati
 					Đặt xe nhanh chóng, nhận xe tại điểm, trả xe linh hoạt.
 				</p>
 
-				<div className="bg-white rounded-2xl shadow-xl p-8 max-w-4xl mx-auto">
+				{/* <div className="bg-white rounded-2xl shadow-xl p-8 max-w-4xl mx-auto">
 					<div className="flex justify-center mb-8">
 						<div className="bg-gray-100 rounded-xl p-1 flex">
 							<button
@@ -65,6 +72,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ activeTab, onChangeTab, stati
 								</div>
 								<div>
 									<label className="block text-sm font-medium text-gray-700 mb-2">Ngày bắt đầu</label>
+									<label className="block text-sm font-medium text-gray-700 mb-2">Ngày nhận xe</label>
 									<input
 										type="date"
 										className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
@@ -78,6 +86,14 @@ const HeroSection: React.FC<HeroSectionProps> = ({ activeTab, onChangeTab, stati
 										className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
 										defaultValue={new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
 									/>
+									<label className="block text-sm font-medium text-gray-700 mb-2">Ngày trả xe</label>
+									<select className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500">
+										<option>4 giờ</option>
+										<option>8 giờ</option>
+										<option>1 ngày</option>
+										<option>3 ngày</option>
+										<option>1 tuần</option>
+									</select>
 								</div>
 							</div>
 							<button className="w-full bg-gradient-to-r from-green-500 to-blue-600 text-white py-4 px-8 rounded-xl font-bold text-lg hover:from-green-600 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg">
@@ -98,7 +114,13 @@ const HeroSection: React.FC<HeroSectionProps> = ({ activeTab, onChangeTab, stati
 							</div>
 						</div>
 					)}
-				</div>
+				</div> */}
+				<button 
+					onClick={handleRentNow}
+					className="w-[350px] bg-gradient-to-r from-green-500 to-blue-600 text-white py-4 px-8 rounded-xl font-bold text-lg hover:from-green-600 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg"
+				>
+					Thuê xe ngay
+				</button>
 			</div>
 		</section>
 	);
