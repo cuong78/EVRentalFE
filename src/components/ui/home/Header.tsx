@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Zap } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 import UserDropdown from '../../common/dropdown/UserDropdown';
@@ -10,6 +11,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ onLoginClick, onRegisterClick }) => {
 	const { user } = useAuth();
+	const navigate = useNavigate();
 
 	return (
 		<header className="bg-white shadow-lg border-b-4 border-green-500">
@@ -26,9 +28,11 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onRegisterClick }) => {
 					</div>
 
 					<nav className="hidden md:flex items-center space-x-8">
-						<a href="#" className="text-gray-700 hover:text-green-600 font-medium transition-colors">Trang chủ</a>
-						<a href="#" className="text-gray-700 hover:text-green-600 font-medium transition-colors">Điểm thuê</a>
-						<a href="#" className="text-gray-700 hover:text-green-600 font-medium transition-colors">Xe điện</a>
+						<button onClick={() => navigate('/')} className="text-gray-700 hover:text-green-600 font-medium transition-colors">Trang chủ</button>
+						<button onClick={() => navigate('/booking')} className="text-gray-700 hover:text-green-600 font-medium transition-colors">Đặt xe</button>
+						{user && (
+							<button onClick={() => navigate('/my-bookings')} className="text-gray-700 hover:text-green-600 font-medium transition-colors">Đơn đặt của tôi</button>
+						)}
 						<a href="#" className="text-gray-700 hover:text-green-600 font-medium transition-colors">Hỗ trợ</a>
 					</nav>
 

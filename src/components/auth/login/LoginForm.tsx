@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useAuth } from "../../../hooks/useAuth";
 import type { LoginFormData } from "../../../types/auth";
 import { BsFacebook } from "react-icons/bs";
 import { FcGoogle } from "react-icons/fc";
+import { useAuth } from "../../../hooks/useAuth";
 
 interface LoginFormProps {
     onSuccess?: () => void;
@@ -12,6 +12,8 @@ interface LoginFormProps {
 }
 
 export const LoginForm = ({ onSuccess, onSwitchToRegister, onSwitchToForgotPassword }: LoginFormProps) => {
+    const { login } = useAuth();
+    
     const {
         register,
         handleSubmit,
@@ -23,11 +25,28 @@ export const LoginForm = ({ onSuccess, onSwitchToRegister, onSwitchToForgotPassw
             rememberMe: false,
         },
     });
-    const { login, isLoading } = useAuth();
     const [showPassword, setShowPassword] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
     const onSubmit = async (data: LoginFormData) => {
-        await login(data, onSuccess);
+        setIsLoading(true);
+        setErrorMsg(null);
+        try {
+            // Use the login method from useAuth
+            await login(data, onSuccess);
+            // Note: login method from useAuth already handles:
+            // - Token storage
+            // - Role detection
+            // - Admin redirect
+            // - Error display
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : "Login failed";
+            setErrorMsg(errorMessage);
+            console.error('Login error:', error);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleGoogleLogin = () => {
@@ -39,7 +58,7 @@ export const LoginForm = ({ onSuccess, onSwitchToRegister, onSwitchToForgotPassw
 
         const authUrl = `${authUri}?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=${responseType}&scope=${scope}`;
 
-        window.location.href = authUrl;
+        globalThis.location.href = authUrl;
     };
 
 
@@ -50,6 +69,11 @@ export const LoginForm = ({ onSuccess, onSwitchToRegister, onSwitchToForgotPassw
                 <p className="mt-2 text-center text-sm text-gray-600">Sign in to continue to your account</p>
             </div>
             <div className="mt-8 bg-white p-8 rounded-xl shadow-2xl">
+                {errorMsg && (
+                    <div className="mb-4 text-center text-red-600 font-semibold">
+                        {errorMsg}
+                    </div>
+                )}
                 <form className="space-y-6" onSubmit={handleSubmit(onSubmit)} autoComplete="off">
                     <div>
                         <label htmlFor="username" className="block text-sm font-medium text-gray-700">
@@ -110,11 +134,12 @@ export const LoginForm = ({ onSuccess, onSwitchToRegister, onSwitchToForgotPassw
                             </label>
                         </div>
                         <div className="text-sm">
-                            <a
+                            <button
+                                type="button"
                                 onClick={onSwitchToForgotPassword}
                                 className="font-medium text-green-600 hover:text-blue-600">
                                 Forgot your password?
-                            </a>
+                            </button>
                         </div>
                     </div>
 
@@ -174,3 +199,4 @@ export const LoginForm = ({ onSuccess, onSwitchToRegister, onSwitchToForgotPassw
 };
 
 export default LoginForm;
+

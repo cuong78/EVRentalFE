@@ -71,6 +71,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ activeTab, onChangeTab, stati
 									</select>
 								</div>
 								<div>
+									<label className="block text-sm font-medium text-gray-700 mb-2">Ngày bắt đầu</label>
 									<label className="block text-sm font-medium text-gray-700 mb-2">Ngày nhận xe</label>
 									<input
 										type="date"
@@ -79,6 +80,12 @@ const HeroSection: React.FC<HeroSectionProps> = ({ activeTab, onChangeTab, stati
 									/>
 								</div>
 								<div>
+									<label className="block text-sm font-medium text-gray-700 mb-2">Ngày kết thúc</label>
+									<input
+										type="date"
+										className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
+										defaultValue={new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+									/>
 									<label className="block text-sm font-medium text-gray-700 mb-2">Ngày trả xe</label>
 									<select className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500">
 										<option>4 giờ</option>

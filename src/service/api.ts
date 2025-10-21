@@ -5,19 +5,21 @@ import { handle401 } from './refresh-token-handler';
 import { tokenManager } from '../utils/token-manager';
 
 const BASE_URL = API.BASE;
-const API_PUBLIC = API.PUBLIC;
 
+// Client with authentication for protected endpoints
 export const apiClient = axios.create({
     baseURL: BASE_URL,
     timeout: 15000,
     headers: {
         'Content-Type': 'application/json'
-    },
-    withCredentials: true
+    }
+    // withCredentials removed to avoid CORS issues with wildcard Access-Control-Allow-Origin
+    // Authentication is handled via Bearer token in Authorization header
 });
 
+// Client without authentication for public endpoints (same baseURL, no auth interceptor)
 export const apiPublicClient = axios.create({
-    baseURL: API_PUBLIC,
+    baseURL: BASE_URL,  // Fixed: use BASE_URL instead of API.PUBLIC
     timeout: 15000,
     headers: {
         'Content-Type': 'application/json'

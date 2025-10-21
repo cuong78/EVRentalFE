@@ -20,6 +20,20 @@
 //         addResult(result ? '✅ API connected' : '❌ API not connected');
 //     };
 
+    const runLoginTest = async () => {
+        addResult('Testing login...');
+        try {
+            const result = await testAuth.testLogin();
+            if (result && typeof result === 'object' && 'verified' in result && result.verified === false) {
+                addResult('ℹ️ Login test shows user needs verification (expected)');
+            } else {
+                addResult('✅ Login test completed');
+            }
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            addResult(`❌ Login test failed: ${errorMessage}`);
+        }
+    };
 //     const runLoginTest = async () => {
 //         addResult('Testing login...');
 //         try {
@@ -52,6 +66,26 @@
 //         addResult(result ? '✅ Full test completed' : '❌ Full test failed');
 //     };
 
+    const runVerificationTest = async () => {
+        const token = prompt('Enter verification token from email:');
+        if (!token) {
+            addResult('⚠️ No token provided');
+            return;
+        }
+        addResult('Testing with verification token...');
+        const result = await testAuth.testLoginWithVerification(token);
+        addResult(result ? '✅ Verification test completed' : '❌ Verification test failed');
+    };
+
+    const handleLogout = async () => {
+        addResult('Logging out...');
+        try {
+            await logout();
+            addResult('✅ Logout completed');
+        } catch (error) {
+            addResult(`❌ Logout failed: ${error}`);
+        }
+    };
 //     const handleLogout = async () => {
 //         addResult('Logging out...');
 //         try {
@@ -74,6 +108,91 @@
 //                 </button>
 //             </div>
 
+            <div className="mb-3">
+                <div className="text-sm text-gray-600">
+                    <strong>Current User:</strong> {user ? user.username : 'Not logged in'}
+                </div>
+                <div className="text-sm text-gray-600">
+                    <strong>Token:</strong> {localStorage.getItem('token') ? 'Exists' : 'None'}
+                </div>
+                <div className="text-sm text-gray-600">
+                    <strong>Access Token:</strong>{' '}
+                    {localStorage.getItem('accessToken') ? (
+                        <span>Exists ({String(localStorage.getItem('accessToken')).slice(0, 8)}...)</span>
+                    ) : (
+                        <span>None</span>
+                    )}
+                </div>
+                <div className="text-sm text-gray-600">
+                    <strong>Refresh Token:</strong>{' '}
+                    {localStorage.getItem('refreshToken') ? 'Exists' : 'None'}
+                </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 mb-3">
+                <button
+                    onClick={runApiConnectionTest}
+                    className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
+                >
+                    Test API
+                </button>
+                <button
+                    onClick={runLoginTest}
+                    className="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600"
+                >
+                    Test Login
+                </button>
+                <button
+                    onClick={runRegisterTest}
+                    className="px-3 py-1 bg-purple-500 text-white text-sm rounded hover:bg-purple-600"
+                >
+                    Test Register
+                </button>
+                <button
+                    onClick={runTokenTest}
+                    className="px-3 py-1 bg-yellow-500 text-white text-sm rounded hover:bg-yellow-600"
+                >
+                    Test Token
+                </button>
+                <button
+                    onClick={runVerificationTest}
+                    className="px-3 py-1 bg-orange-500 text-white text-sm rounded hover:bg-orange-600"
+                >
+                    Test Verify
+                </button>
+                <button
+                    onClick={runFullTest}
+                    className="px-3 py-1 bg-indigo-500 text-white text-sm rounded hover:bg-indigo-600"
+                >
+                    Run Full Test
+                </button>
+                {user && (
+                    <button
+                        onClick={handleLogout}
+                        className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600 col-span-2"
+                    >
+                        Logout
+                    </button>
+                )}
+            </div>
+
+            <div className="border-t pt-2">
+                <div className="text-sm font-medium text-gray-700 mb-1">Test Results:</div>
+                <div className="text-xs text-gray-600 max-h-32 overflow-y-auto">
+                    {testResults.length === 0 ? (
+                        <div className="text-gray-400">No tests run yet</div>
+                    ) : (
+                        testResults.map((result, index) => (
+                            <div key={`result-${index}-${result.slice(0, 20)}`} className="mb-1">
+                                {result}
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
 //             <div className="mb-3">
 //                 <div className="text-sm text-gray-600">
 //                     <strong>Current User:</strong> {user ? user.username : 'Not logged in'}

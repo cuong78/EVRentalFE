@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FileText, User, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { FileText, User, LogOut, Settings } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 import AvatarLogo from '../avatar/AvatarLogo';
 
@@ -15,6 +16,7 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const { logout, isLoading } = useAuth();
+    const navigate = useNavigate();
 
     const handleLogout = async () => {
         await logout();
@@ -22,14 +24,12 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
     };
 
     const handleMyOrders = () => {
-        // TODO: Navigate to orders page
-        console.log('Navigate to my orders');
+        navigate('/my-bookings');
         setIsOpen(false);
     };
 
     const handleAccount = () => {
-        // TODO: Navigate to account page
-        console.log('Navigate to account');
+        navigate('/profile');
         setIsOpen(false);
     };
 
@@ -72,6 +72,20 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
             {/* Dropdown Menu */}
             {isOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                    {/* Admin Dashboard - Only show for admin users */}
+                    {user.roles.some(role => role.roleName === "ADMIN") && (
+                        <>
+                            <a
+                                href="/admin"
+                                className="w-full flex items-center space-x-3 px-4 py-3 text-left text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                            >
+                                <Settings className="h-5 w-5" />
+                                <span className="text-sm font-medium">Admin Dashboard</span>
+                            </a>
+                            <div className="border-t border-gray-100 my-1"></div>
+                        </>
+                    )}
+
                     {/* Đơn hàng của tôi */}
                     <button
                         onClick={handleMyOrders}
@@ -81,13 +95,13 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
                         <span className="text-sm font-medium">Đơn hàng của tôi</span>
                     </button>
 
-                    {/* Tài khoản */}
+                    {/* Thông tin cá nhân */}
                     <button
                         onClick={handleAccount}
                         className="w-full flex items-center space-x-3 px-4 py-3 text-left text-gray-700 hover:bg-gray-50 transition-colors duration-200"
                     >
                         <User className="h-5 w-5" />
-                        <span className="text-sm font-medium">Tài khoản</span>
+                        <span className="text-sm font-medium">Thông tin cá nhân</span>
                     </button>
 
                     {/* Divider */}

@@ -60,6 +60,11 @@ export interface LoginFormData {
 }
 
 export interface LoginResponse {
-    token: string;
-    roles: Role[];
+    statusCode: number;
+    message: string;
+    data: {
+        token: string;
+        refreshToken?: string;
+        roles: Role[];
+    };
 }
