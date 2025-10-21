@@ -4,7 +4,6 @@ import { API } from '../../constants';
 export const BackendStatus: React.FC = () => {
     const [status, setStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
     const [lastCheck, setLastCheck] = useState<Date | null>(null);
-    const [isVisible, setIsVisible] = useState(true);
 
     const checkBackendStatus = async () => {
         setStatus('checking');
@@ -63,8 +62,6 @@ export const BackendStatus: React.FC = () => {
         }
     };
 
-    if (!isVisible) return null;
-
     return (
         <div className="fixed top-4 right-4 z-50">
             <div className={`px-3 py-2 rounded-lg text-sm font-medium ${getStatusColor()}`}>
@@ -79,13 +76,6 @@ export const BackendStatus: React.FC = () => {
                         className="ml-2 text-xs underline hover:no-underline"
                     >
                         Refresh
-                    </button>
-                    <button
-                        onClick={() => setIsVisible(false)}
-                        className="ml-1 text-xs hover:bg-black/10 rounded px-1"
-                        title="Ẩn"
-                    >
-                        ✕
                     </button>
                 </div>
                 {lastCheck && (

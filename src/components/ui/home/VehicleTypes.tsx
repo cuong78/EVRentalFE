@@ -1,5 +1,4 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Battery, Star } from 'lucide-react';
 
 type Vehicle = { id: number; type: string; battery: number; price: string; image: string; features: string[] };
@@ -9,8 +8,6 @@ interface VehicleTypesProps {
 }
 
 const VehicleTypes: React.FC<VehicleTypesProps> = ({ vehicles }) => {
-	const navigate = useNavigate();
-
 	return (
 		<section className="py-20 bg-gray-50">
 			<div className="container mx-auto px-6">
@@ -53,12 +50,9 @@ const VehicleTypes: React.FC<VehicleTypesProps> = ({ vehicles }) => {
 								<div className="border-t border-gray-100 pt-4">
 									<div className="flex items-center justify-between">
 										<span className="text-2xl font-bold text-green-600">{vehicle.price}</span>
-										<button 
-										onClick={() => navigate('/booking')}
-										className="bg-gradient-to-r from-green-500 to-blue-600 text-white py-2 px-6 rounded-xl font-medium hover:from-green-600 hover:to-blue-700 transition-all duration-300"
-									>
-										Đặt xe
-									</button>
+										<button className="bg-gradient-to-r from-green-500 to-blue-600 text-white py-2 px-6 rounded-xl font-medium hover:from-green-600 hover:to-blue-700 transition-all duration-300">
+											Đặt xe
+										</button>
 									</div>
 								</div>
 							</div>

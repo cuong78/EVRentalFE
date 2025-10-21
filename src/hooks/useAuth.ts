@@ -9,23 +9,11 @@ export function useAuth() {
     const context = useContext(AuthContext);
     if (!context) throw new Error("useAuth must be used inside AuthProvider");
 
-    const [user, setUser] = useState<UserDetails | null>(() => {
-        // Load user from localStorage on init
-        const savedUser = localStorage.getItem('user');
-        const token = localStorage.getItem('token');
-        
-        // If no token, clear user data
-        if (!token && savedUser) {
-            localStorage.removeItem('user');
-            return null;
-        }
-        
-        return savedUser ? JSON.parse(savedUser) : null;
-    });
-    const token = localStorage.getItem("token"); 
-    const isAdmin = user?.roles?.some(role => role.roleName === "ADMIN" || role.roleName === "ROLE_ADMIN");
-    const isManager = user?.roles?.some(role => role.roleName === "MANAGER");
-    const isEmployee = user?.roles?.some(role => role.roleName === "EMPLOYEE");
+    const { user, setUser } = context;
+    const token = localStorage.getItem("token");
+    const isAdmin = user?.roles[0]?.roleName === "ADMIN";
+    const isManager = user?.roles[0]?.roleName === "MANAGER";
+    const isEmployee = user?.roles[0]?.roleName === "EMPLOYEE";
 
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
@@ -55,23 +43,20 @@ export function useAuth() {
         try {
             const res = await authService.login(data); // res: LoginResponse
 
-            if (!res?.data?.token) {
+            if (!res?.token) {
                 showErrorToast("Đăng nhập thất bại: Không nhận được token");
                 return null;
             }
 
-            // Lưu token vào localStorage với key mới
-            localStorage.setItem("token", res.data.token);
-            if (res.data.refreshToken) {
-                localStorage.setItem("refreshToken", res.data.refreshToken);
-            }
+            // Lưu token vào localStorage
+            localStorage.setItem("token", res.token);
             
-            // Tạo user object từ token response (sẽ fetch user info sau)
+            // Tạo user object từ token response (không cần gọi API getInfo)
             const userInfo = {
-                userId: 6, // Temporary - sẽ được update từ backend
+                userId: 0, // Sẽ được cập nhật sau khi có API
                 username: data.username,
-                fullName: data.username,
-                email: data.username,
+                fullName: data.username, // Tạm thời dùng username
+                email: data.username, // Giả sử username là email
                 phoneNumber: "",
                 identityCard: "",
                 gender: 'OTHER' as const,
@@ -81,71 +66,26 @@ export function useAuth() {
                 memberScore: 0,
                 status: 'ACTIVE' as const,
                 deleted: false,
-                roles: Array.isArray(res.data.roles) 
-                    ? res.data.roles.map(role => ({
-                        roleName: typeof role === 'string' ? role : role.roleName || role.name || 'MEMBER'
-                    }))
-                    : [{ roleName: 'MEMBER' }],
+                roles: res.roles || [],
                 permissions: []
             };
 
             setUser(userInfo);
-            // Save user to localStorage
-            localStorage.setItem('user', JSON.stringify(userInfo));
             showSuccessToast("Đăng nhập thành công!");
-            
-            console.log('=== Login Success Debug ===');
-            console.log('User info:', userInfo);
-            console.log('User roles:', userInfo.roles);
-            
-            // Chuyển hướng dựa trên role
-            const userRoles = userInfo.roles || [];
-            let targetPath = "/";
-            
-            if (userRoles.length > 0) {
-                const roleName = userRoles[0].roleName;
-                console.log('Detected role:', roleName);
-                if (roleName === "ADMIN") {
-                    targetPath = "/admin";
-                    console.log('Will navigate to /admin');
-                } else {
-                    targetPath = "/";
-                    console.log('Will navigate to /');
-                }
-            } else {
-                console.log('No roles found, will navigate to /');
-            }
 
-            // Force navigation immediately using window.location
-            console.log('Force navigating to:', targetPath);
-            
-            // Close popup first
             onSuccess?.();
             
-            // Try multiple navigation methods for reliability
-            setTimeout(() => {
-                console.log('Attempting navigation...');
-                
-                // Method 1: Try React Router first
-                try {
-                    navigate(targetPath, { replace: true });
-                    console.log('React Router navigate attempted');
-                } catch (error) {
-                    console.log('React Router failed:', error);
+            // Chuyển hướng dựa trên role
+            if (res.roles && res.roles.length > 0) {
+                const roleName = res.roles[0].roleName;
+                if (roleName === "MEMBER") {
+                    navigate("/");
+                } else {
+                    navigate("/admin");
                 }
-                
-                // Method 2: Force with window.location after short delay
-                setTimeout(() => {
-                    if (window.location.pathname !== targetPath) {
-                        console.log('React Router failed, using window.location');
-                        window.location.href = targetPath;
-                    } else {
-                        console.log('Navigation successful via React Router');
-                        // Force page refresh to ensure UI updates
-                        window.location.reload();
-                    }
-                }, 200);
-            }, 50);
+            } else {
+                navigate("/");
+            }
 
             return userInfo;
         } catch (error: any) {
@@ -159,18 +99,9 @@ export function useAuth() {
 
 
 
-    const logout = async (force = false) => {
+    const logout = async () => {
         setIsLoading(true);
         try {
-            // If force logout (due to 401), skip API call
-            if (force) {
-                localStorage.clear();
-                setUser(null);
-                showSuccessToast("Phiên đăng nhập đã hết hạn!");
-                window.location.href = "/";
-                return;
-            }
-
             const response = await authService.logout(token || "");
 
             if (response.code === 200) {
@@ -297,21 +228,12 @@ export function useAuth() {
     }
 
 
-    const updateUserInfo = (updatedInfo: Partial<UserDetails>) => {
-        if (user) {
-            const updatedUser = { ...user, ...updatedInfo };
-            setUser(updatedUser);
-            localStorage.setItem('user', JSON.stringify(updatedUser));
-        }
-    };
-
     return {
         login,
         isLoading,
         user,
         register,
         setUser,
-        updateUserInfo,
         isAdmin,
         isManager,
         isEmployee,

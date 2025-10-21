@@ -43,12 +43,9 @@ export const handle401 = async (originalRequest: any, apiClient: any) => {
         return apiClient(originalRequest);
     } catch (err) {
         processQueue(err, null);
-        console.error('Token refresh failed:', err);
-        
-        // Force logout when refresh fails
         localStorage.clear();
-        window.location.href = '/';
-        
+        // Redirect về trang chủ thay vì /unauthorized vì login là modal
+        window.location.href = "/";
         return Promise.reject(err);
     } finally {
         isRefreshing = false;

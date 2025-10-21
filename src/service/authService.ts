@@ -5,10 +5,9 @@ import { API } from "../constants";
 import { tokenManager } from "../utils/token-manager";
 import axios from 'axios';
 
-// Use /api prefix directly since API.BASE is now empty string (Vite proxy handles routing)
-const API_BASE = '/api';
+const API_BASE = `${API.BASE}`;
 const API_GET_USER = `${API.USER}/accounts/myInfor`;
-const API_FORGOT_PASSWORD = '/api/forgot-password';
+const API_FORGOT_PASSWORD = `${API.BASE}/forgot-password`;
 
 export const authService = {
     register: async (data: RegisterFormData): Promise<{ data: any; message?: string }> => {
@@ -24,7 +23,7 @@ export const authService = {
 
         try {
             // Use a direct axios call WITHOUT credentials/Authorization to avoid CORS preflight issues
-            const response = await axios.post('/api/register', payload, {
+            const response = await axios.post(`${API.BASE}/register`, payload, {
                 withCredentials: false,
                 headers: { 'Content-Type': 'application/json' },
             });
@@ -45,7 +44,7 @@ export const authService = {
     },
 
     verifyEmail: async (token: string): Promise<{ message?: string }> => {
-        const response = await axios.post('/api/verify', null, {
+        const response = await axios.post(`${API.BASE}/verify`, null, {
             params: { token },
             withCredentials: false,
             headers: { 'Content-Type': 'application/json' },
@@ -58,7 +57,7 @@ export const authService = {
 
     login: async (data: LoginFormData): Promise<LoginResponse> => {
         // Sử dụng axios trực tiếp để tránh CORS issue với withCredentials
-        const response = await axios.post('/api/login', data, {
+        const response = await axios.post(`${API.BASE}/login`, data, {
             headers: {
                 'Content-Type': 'application/json'
             },
@@ -69,15 +68,9 @@ export const authService = {
         const code = res.statusCode ?? res.code ?? response.status;
         
         if (code === 200) {
-            // Return the response exactly as it comes from the backend
             return {
-                statusCode: res.statusCode,
-                message: res.message,
-                data: {
-                    token: res.data.token,
-                    refreshToken: res.data.refreshToken,
-                    roles: res.data.roles || []
-                }
+                token: res.data.token,
+                roles: res.data.roles || []
             };
         }
         
@@ -87,7 +80,7 @@ export const authService = {
     logout: async (token: string): Promise<ApiResponses<any>> => {
         try {
             // Sử dụng axios trực tiếp để gửi POST request đến /api/logout
-            const response = await axios.post('/api/logout', {}, {
+            const response = await axios.post(`${API.BASE}/logout`, {}, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
@@ -142,7 +135,7 @@ export const authService = {
         if (!currentToken) throw new Error("No token available for refresh");
 
         // Sử dụng axios trực tiếp thay vì apiClient để tránh vòng lặp vô hạn
-        const response = await axios.post('/api/refresh-token', {
+        const response = await axios.post(`${API.BASE}/refresh-token`, {
             token: currentToken,
         }, {
             headers: {
@@ -165,7 +158,7 @@ export const authService = {
 
     loginWithGoogle: async (code: string): Promise<ApiResponses<LoginResponse>> => {
         try {
-            const response = await axios.post('/api/google-login', { code }, {
+            const response = await axios.post(`${API.BASE}/google-login`, { code }, {
                 headers: {
                     'Content-Type': 'application/json'
                 },

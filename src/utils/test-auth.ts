@@ -10,35 +10,16 @@ export const testAuth = {
         console.log('🧪 Testing Login...');
         try {
             const loginData = {
-                username: 'admin', // User đã verify và hoạt động
-                password: 'admin123',
+                username: 'user123',
+                password: 'user123',
                 rememberMe: false
             };
             
             const result = await authService.login(loginData);
             console.log('✅ Login successful:', result);
             return result;
-        } catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            console.log('❌ Login test failed:', errorMessage);
-            
-            // Log chi tiết lỗi từ server
-            if (error && typeof error === 'object' && 'response' in error) {
-                const axiosError = error as { response: { status: number; data: unknown } };
-                console.log('📋 Server response:', axiosError.response.status, axiosError.response.data);
-                const responseData = axiosError.response.data as { message?: string; error?: string } | null;
-                const serverMessage = responseData?.message || responseData?.error;
-                if (serverMessage) {
-                    console.log('📋 Server message:', serverMessage);
-                    
-                    // Nếu là lỗi "not verified" hoặc "disabled", đây là hành vi đúng
-                    if (serverMessage.includes('not verified') || serverMessage.includes('disabled')) {
-                        console.log('ℹ️  This is expected - user needs to verify email first');
-                        return { verified: false, message: serverMessage };
-                    }
-                }
-            }
-            
+        } catch (error) {
+            console.log('❌ Login failed:', error);
             throw error;
         }
     },
@@ -113,37 +94,6 @@ export const testAuth = {
         }
     },
 
-    // Test với user đã verify (nếu có token thật)
-    async testLoginWithVerification(verificationToken?: string) {
-        console.log('🧪 Testing Login with Email Verification...');
-        
-        if (!verificationToken) {
-            console.log('⚠️  No verification token provided. Skipping verification test.');
-            return false;
-        }
-        
-        try {
-            // 1. Verify email trước
-            console.log('📧 Verifying email with token...');
-            await authService.verifyEmail(verificationToken);
-            console.log('✅ Email verified successfully');
-            
-            // 2. Thử login sau khi verify
-            console.log('🔐 Testing login after verification...');
-            const loginResult = await this.testLogin();
-            console.log('✅ Login after verification successful:', loginResult);
-            return true;
-        } catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            console.log('❌ Verification or login failed:', errorMessage);
-            if (error && typeof error === 'object' && 'response' in error) {
-                const axiosError = error as { response: { status: number; data: unknown } };
-                console.log('📋 Server response:', axiosError.response.status, axiosError.response.data);
-            }
-            return false;
-        }
-    },
-
     // Test toàn bộ authentication flow
     async testFullAuthFlow() {
         console.log('🧪 Testing Full Authentication Flow...');
@@ -158,19 +108,15 @@ export const testAuth = {
         // 2. Test register
         try {
             await this.testRegister();
-        } catch {
+        } catch (error) {
             console.log('⚠️ Register test failed (might be expected)');
         }
         
         // 3. Test login
         try {
-            const loginResult = await this.testLogin();
-            // Nếu login trả về thông tin "not verified", đây là hành vi đúng
-            if (loginResult && typeof loginResult === 'object' && loginResult.verified === false) {
-                console.log('ℹ️  Login test shows user needs verification (expected behavior)');
-            }
-        } catch {
-            console.log('❌ Login test failed with unexpected error');
+            await this.testLogin();
+        } catch (error) {
+            console.log('❌ Login test failed');
             return false;
         }
         
@@ -184,6 +130,6 @@ export const testAuth = {
 
 // Export để sử dụng trong console browser
 if (typeof window !== 'undefined') {
-    (window as unknown as { testAuth: typeof testAuth }).testAuth = testAuth;
+    (window as any).testAuth = testAuth;
 }
 

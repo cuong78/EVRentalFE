@@ -64,7 +64,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ activeTab, onChangeTab, stati
 									</select>
 								</div>
 								<div>
-									<label className="block text-sm font-medium text-gray-700 mb-2">Ngày bắt đầu</label>
+									<label className="block text-sm font-medium text-gray-700 mb-2">Ngày thuê</label>
 									<input
 										type="date"
 										className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
@@ -72,12 +72,14 @@ const HeroSection: React.FC<HeroSectionProps> = ({ activeTab, onChangeTab, stati
 									/>
 								</div>
 								<div>
-									<label className="block text-sm font-medium text-gray-700 mb-2">Ngày kết thúc</label>
-									<input
-										type="date"
-										className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
-										defaultValue={new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
-									/>
+									<label className="block text-sm font-medium text-gray-700 mb-2">Thời gian thuê</label>
+									<select className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500">
+										<option>4 giờ</option>
+										<option>8 giờ</option>
+										<option>1 ngày</option>
+										<option>3 ngày</option>
+										<option>1 tuần</option>
+									</select>
 								</div>
 							</div>
 							<button className="w-full bg-gradient-to-r from-green-500 to-blue-600 text-white py-4 px-8 rounded-xl font-bold text-lg hover:from-green-600 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg">
