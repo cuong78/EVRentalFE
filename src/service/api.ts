@@ -55,8 +55,8 @@ apiClient.interceptors.response.use(
 
         const apiMessage = error?.response?.data?.message || "Lỗi không xác định";
 
-        // ✅ Refresh token nếu token hết hạn
-        if (status === 401 && !originalRequest._retry) {
+        // ✅ Refresh token nếu token hết hạn (trừ endpoint logout)
+        if (status === 401 && !originalRequest._retry && !originalRequest?.url?.includes('/logout')) {
             return handle401(originalRequest, apiClient);
         }
 
@@ -65,7 +65,7 @@ apiClient.interceptors.response.use(
             showErrorToast("Không có quyền truy cập");
         } else if (status === 500) {
             showErrorToast("Lỗi hệ thống");
-        } else {
+        } else if (!originalRequest?.url?.includes('/logout')) {
             showErrorToast(apiMessage);
         }
 

@@ -9,9 +9,10 @@ interface LoginFormProps {
     onSuccess?: () => void;
     onSwitchToRegister?: () => void;
     onSwitchToForgotPassword?: () => void;
+    stayOnPage?: boolean; // nếu true, không redirect sau login
 }
 
-export const LoginForm = ({ onSuccess, onSwitchToRegister, onSwitchToForgotPassword }: LoginFormProps) => {
+export const LoginForm = ({ onSuccess, onSwitchToRegister, onSwitchToForgotPassword, stayOnPage }: LoginFormProps) => {
     const {
         register,
         handleSubmit,
@@ -27,7 +28,7 @@ export const LoginForm = ({ onSuccess, onSwitchToRegister, onSwitchToForgotPassw
     const [showPassword, setShowPassword] = useState(false);
 
     const onSubmit = async (data: LoginFormData) => {
-        await login(data, onSuccess);
+        await login(data, onSuccess, { redirectTo: stayOnPage ? null : undefined });
     };
 
     const handleGoogleLogin = () => {

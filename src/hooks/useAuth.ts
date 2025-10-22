@@ -38,7 +38,11 @@ export function useAuth() {
         }
     };
 
-    const login = async (data: LoginFormData, onSuccess?: () => void) => {
+    const login = async (
+        data: LoginFormData,
+        onSuccess?: () => void,
+        options?: { redirectTo?: string | null }
+    ) => {
         setIsLoading(true);
         try {
             const res = await authService.login(data); // res: LoginResponse
@@ -75,16 +79,24 @@ export function useAuth() {
 
             onSuccess?.();
             
-            // Chuyển hướng dựa trên role
-            if (res.roles && res.roles.length > 0) {
-                const roleName = res.roles[0].roleName;
-                if (roleName === "MEMBER") {
-                    navigate("/");
-                } else {
-                    navigate("/admin");
-                }
+            // Điều hướng sau đăng nhập
+            const redirect = options?.redirectTo;
+            if (redirect === null) {
+                // Không điều hướng, ở lại trang hiện tại
+            } else if (typeof redirect === 'string') {
+                navigate(redirect);
             } else {
-                navigate("/");
+                // Mặc định: chuyển theo role như trước
+                if (res.roles && res.roles.length > 0) {
+                    const roleName = res.roles[0].roleName;
+                    if (roleName === "MEMBER") {
+                        navigate("/");
+                    } else {
+                        navigate("/admin");
+                    }
+                } else {
+                    navigate("/");
+                }
             }
 
             return userInfo;

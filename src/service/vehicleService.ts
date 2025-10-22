@@ -38,6 +38,7 @@ export interface Vehicle {
 		city: string;
 		address: string;
 	};
+	photos?: string;
 }
 
 export interface VehicleSearchResponse {
@@ -57,7 +58,20 @@ export const vehicleService = {
 	getStations: async (): Promise<Station[]> => {
 		try {
 			const response = await apiClient.get(`${API_BASE}/rental-stations`);
-			return response.data;
+			// API may return either an array directly or a wrapped object { statusCode, message, data: [...] }
+			const resp = response.data;
+			if (Array.isArray(resp)) {
+				return resp as Station[];
+			}
+			if (resp && Array.isArray(resp.data)) {
+				return resp.data as Station[];
+			}
+			// Some endpoints might wrap twice or return data in a different field — try common fallbacks
+			if (resp && resp.data && Array.isArray(resp.data.data)) {
+				return resp.data.data as Station[];
+			}
+			console.warn('Unexpected stations response shape, returning empty array', resp);
+			return [];
 		} catch (error) {
 			console.error('Failed to fetch stations:', error);
 			throw error;

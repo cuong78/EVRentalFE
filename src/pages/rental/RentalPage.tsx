@@ -70,6 +70,7 @@ const RentalPage: React.FC = () => {
 
 	const handleSearch = async (data: SearchData) => {
 		setSearchData(data);
+		try { sessionStorage.setItem('lastRentalSearch', JSON.stringify(data)); } catch {}
 		setLoading(true);
 		setError(null);
 		
@@ -91,6 +92,7 @@ const RentalPage: React.FC = () => {
 					battery: 85, // Default value since not in API
 					price: vehicleType.rentalRate.toString(),
 					image: getVehicleIcon(vehicleType.typeName),
+					photos: (vehicle as any).photos,
 					features: getVehicleFeatures(vehicleType.typeName),
 					location: vehicle.station.address,
 					available: true, // All vehicles in availableVehicles are available

@@ -1,5 +1,7 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Battery, MapPin, Clock, Users, Zap } from 'lucide-react';
+import { formatNumberVN } from '../../../utils/format';
 
 interface Vehicle {
 	id: number;
@@ -26,11 +28,36 @@ interface VehicleCardProps {
 }
 
 const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onSelect }) => {
+	const navigate = useNavigate();
+
+	const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+	const photoUrl = (() => {
+		const src = vehicle.photos || vehicle.image;
+		if (typeof src === 'string' && (src.startsWith('http') || src.startsWith('/'))) return src;
+		return '';
+	})();
+
+	const handleOpenDetail = () => {
+		const slug = slugify(vehicle.name);
+		navigate(`/thue-xe/${slug}`, { state: { vehicle } });
+	};
+
 	return (
-		<div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-gray-100">
+		<div
+			role="button"
+			tabIndex={0}
+			onClick={handleOpenDetail}
+			onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleOpenDetail(); }}
+			className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-gray-100 cursor-pointer"
+		>
 			{/* Vehicle Image */}
-			<div className="relative h-48 bg-gradient-to-br from-green-50 to-blue-50 rounded-t-2xl flex items-center justify-center">
-				<div className="text-6xl mb-4">{vehicle.image}</div>
+				<div className="relative h-48 bg-gradient-to-br from-green-50 to-blue-50 rounded-t-2xl flex items-center justify-center overflow-hidden">
+				{photoUrl ? (
+					<img src={photoUrl} alt={vehicle.name} className="h-32 sm:h-36 md:h-40 w-auto max-w-full object-contain mb-2" />
+				) : (
+					<div className="text-7xl md:text-8xl mb-2">{vehicle.image}</div>
+				)}
 				{vehicle.available ? (
 					<div className="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
 						Có sẵn
@@ -43,14 +70,14 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onSelect }) => {
 			</div>
 
 			{/* Vehicle Info */}
-			<div className="p-6">
+				<div className="p-6">
 				<div className="flex justify-between items-start mb-3">
 					<div>
 						<h3 className="text-xl font-bold text-gray-800 mb-1">{vehicle.name}</h3>
 						<p className="text-gray-600 text-sm">{vehicle.type}</p>
 					</div>
 					<div className="text-right">
-						<div className="text-2xl font-bold text-green-600">{vehicle.price}</div>
+					<div className="text-2xl font-bold text-green-600">{formatNumberVN(vehicle.price)}</div>
 						<div className="text-sm text-gray-500">/ngày</div>
 					</div>
 				</div>
@@ -96,7 +123,7 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onSelect }) => {
 
 				{/* Action Button */}
 				<button
-					onClick={() => onSelect?.(vehicle)}
+					onClick={(e) => { e.stopPropagation(); onSelect?.(vehicle); handleOpenDetail(); }}
 					disabled={!vehicle.available}
 					className={`w-full py-3 px-4 rounded-xl font-medium transition-all duration-300 ${
 						vehicle.available

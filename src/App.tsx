@@ -6,6 +6,7 @@ import HomeLayout from "./layouts/HomeLayout";
 import HomeContent from "./pages/home/HomeContent";
 import VerifyEmail from "./pages/auth/VerifyEmail";
 import RentalPage from "./pages/rental/RentalPage";
+import VehicleDetail from './pages/rental/VehicleDetail';
 import AdminPage from "./pages/admin/AdminPage";
 import UnauthorizedPage from "./pages/auth/UnauthorizedPage";
 // import { AuthDebugPanel } from "./components/debug/AuthDebugPanel";
@@ -29,6 +30,7 @@ function App() {
                 <Route path="/" element={<HomeLayout />}>
                     <Route index element={<HomeContent />} />
                     <Route path="thue-xe" element={<RentalPage />} />
+                    <Route path="thue-xe/:name" element={<VehicleDetail />} />
                 </Route>
                 <Route path="/verify-email" element={<VerifyEmail />} />
                 {/*admin*/}

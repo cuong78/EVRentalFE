@@ -77,13 +77,14 @@ export const authService = {
         throw new Error(res.message || 'Login failed');
     },
 
-    logout: async (token: string): Promise<ApiResponses<any>> => {
+    logout: async (token?: string): Promise<ApiResponses<any>> => {
         try {
+            const authToken = token ?? tokenManager.getToken() ?? "";
             // Sử dụng axios trực tiếp để gửi POST request đến /api/logout
             const response = await axios.post(`${API.BASE}/logout`, {}, {
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': `Bearer ${authToken}`
                 },
                 withCredentials: false
             });
@@ -98,10 +99,27 @@ export const authService = {
                     data: res.data || null
                 };
             }
-            
+            // Nếu token đã hết hạn, xem như logout thành công phía client
+            if (code === 401 || code === 403) {
+                return {
+                    code: 200,
+                    message: 'Logout successful',
+                    data: null
+                };
+            }
+
             return errorResponse<any>(res.message || 'Logout failed');
         } catch (error: any) {
             console.error("Logout thất bại", error);
+            // Nếu server trả 401/403 vì token hết hạn thì vẫn coi như đã logout
+            const status = error?.response?.status;
+            if (status === 401 || status === 403) {
+                return {
+                    code: 200,
+                    message: 'Logout successful',
+                    data: null
+                };
+            }
             const errorMessage = error?.response?.data?.message || error?.message || "Failed to logout";
             return errorResponse<any>(errorMessage);
         }
