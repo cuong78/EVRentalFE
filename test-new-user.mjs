@@ -9,7 +9,7 @@ const newUser = {
     confirmPassword: "password123"
 };
 
-const API_BASE = 'http://localhost:8080/api';
+const API_BASE = 'http://145.79.13.143:8080/api';
 
 console.log('🔍 Testing New User Registration...');
 console.log('📧 Using email:', newUser.email);
