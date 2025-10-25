@@ -1,5 +1,5 @@
-import { MdOutlineCarRental, MdOutlinePlace, MdCategory, MdOutlineHomeRepairService } from "react-icons/md";
-import { FaUsersCog, FaGift, FaTicketAlt, FaHistory, FaUserCircle, FaMoneyBillWave, FaFileContract, FaUndoAlt, FaStar } from "react-icons/fa";
+import { MdOutlineCarRental, MdOutlinePlace, MdCategory } from "react-icons/md";
+import { FaUsersCog, FaTicketAlt, FaUserCircle, FaMoneyBillWave, FaFileContract, FaUndoAlt } from "react-icons/fa";
 import { ImHome } from "react-icons/im";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../../../hooks/useAuth";
@@ -23,19 +23,13 @@ export const Navigation = ({ collapsed = false }: NavigationProps) => {
     { label: "Quản Lý Điểm Thuê Xe", href: "/admin/rental-stations", icon: <MdOutlinePlace /> },
     { label: "Quản Lý Loại Xe", href: "/admin/vehicle-types", icon: <MdCategory /> },
 
-    // Quản Lý Khuyến Mãi
-    { label: "Quản Lý Khuyến Mãi", href: "/admin/promotions", icon: <FaGift /> },
-
     // Quản Lý Thuê Xe & Thanh Toán
     { label: "Quản Lý Thuê Xe", href: "/admin/booking", icon: <FaTicketAlt /> },
-    { label: "Lịch Sử Thuê Xe", href: "/admin/order-history", icon: <FaHistory /> },
     { label: "Quản Lý Hồ Sơ Khách Hàng", href: "/admin/documents", icon: <FaUserCircle /> },
     { label: "Quản Lý Thanh Toán", href: "/admin/payment-management", icon: <FaMoneyBillWave /> },
     { label: "Quản Lý Hợp Đồng", href: "/admin/contract", icon: <FaFileContract /> },
     { label: "Quản Lý Hoàn Trả", href: "/admin/return-transaction", icon: <FaUndoAlt /> },
 
-    // Quản Lý Đánh Giá
-    { label: "Quản Lý Đánh Giá", href: "/admin/feedback", icon: <FaStar /> },
   ];
 
   return (

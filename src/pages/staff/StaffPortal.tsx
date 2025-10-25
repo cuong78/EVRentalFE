@@ -7,6 +7,7 @@ import { contractService } from '../../service/contractService';
 import { useNavigate } from 'react-router-dom';
 import { returnTransactionService } from '../../service/returnTransactionService';
 import { documentService } from '../../service/documentService';
+import jsQR from 'jsqr';
 
 interface AvailableChoice {
     id: number;
@@ -74,6 +75,13 @@ const StaffPortal: React.FC = () => {
     const [editIsDefault, setEditIsDefault] = useState(false);
     const editFrontPhotoInputRef = useRef<HTMLInputElement | null>(null);
     const editBackPhotoInputRef = useRef<HTMLInputElement | null>(null);
+
+    // QR Scanner states
+    const [qrScannerOpen, setQrScannerOpen] = useState(false);
+    const qrVideoRef = useRef<HTMLVideoElement | null>(null);
+    const qrCanvasRef = useRef<HTMLCanvasElement | null>(null);
+    const qrStreamRef = useRef<MediaStream | null>(null);
+    const qrScanIntervalRef = useRef<number | null>(null);
 
     const matchedType = useMemo(() => {
         if (!available || !booking) return null;
@@ -458,6 +466,136 @@ const StaffPortal: React.FC = () => {
         }
     };
 
+    // QR Scanner functions
+    const openQrScanner = async () => {
+        if (!matchedType || !matchedType.availableVehicles || matchedType.availableVehicles.length === 0) {
+            showErrorToast('Không có xe khả dụng để quét');
+            return;
+        }
+
+        try {
+            setQrScannerOpen(true);
+            
+            // Đợi modal render xong
+            setTimeout(async () => {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        video: { 
+                            facingMode: { ideal: 'environment' },
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 }
+                        },
+                        audio: false
+                    });
+                    
+                    qrStreamRef.current = stream;
+                    
+                    if (qrVideoRef.current) {
+                        qrVideoRef.current.srcObject = stream;
+                        qrVideoRef.current.onloadedmetadata = () => {
+                            qrVideoRef.current?.play().catch(console.error);
+                            startQrScanning();
+                        };
+                    }
+                } catch (err: any) {
+                    showErrorToast(err?.message || 'Không mở được camera');
+                    setQrScannerOpen(false);
+                }
+            }, 100);
+        } catch (e: any) {
+            showErrorToast(e?.message || 'Không mở được camera');
+        }
+    };
+
+    const startQrScanning = () => {
+        if (!qrVideoRef.current || !qrCanvasRef.current) return;
+
+        const video = qrVideoRef.current;
+        const canvas = qrCanvasRef.current;
+        const ctx = canvas.getContext('2d');
+        
+        if (!ctx) return;
+
+        // Scan mỗi 300ms
+        qrScanIntervalRef.current = window.setInterval(() => {
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const code = scanQRCode(imageData);
+                
+                if (code) {
+                    handleQrCodeDetected(code);
+                }
+            }
+        }, 300);
+    };
+
+    const scanQRCode = (imageData: ImageData): string | null => {
+        try {
+            const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                inversionAttempts: "dontInvert",
+            });
+            return code?.data || null;
+        } catch (e) {
+            console.error('QR scan error:', e);
+            return null;
+        }
+    };
+
+    const handleQrCodeDetected = (qrData: string) => {
+        try {
+            // QR data có thể là: "VEHICLE:123" hoặc chỉ là "123"
+            let vehicleId: number;
+            
+            if (qrData.includes('VEHICLE:')) {
+                vehicleId = parseInt(qrData.split('VEHICLE:')[1]);
+            } else if (qrData.includes('VH')) {
+                // Format: VH123
+                vehicleId = parseInt(qrData.replace('VH', ''));
+            } else {
+                vehicleId = parseInt(qrData);
+            }
+
+            if (isNaN(vehicleId)) {
+                showErrorToast('Mã QR không hợp lệ');
+                return;
+            }
+
+            // Kiểm tra xe có trong danh sách khả dụng không
+            const availableVehicles = matchedType?.availableVehicles || [];
+            const vehicle = availableVehicles.find((v: any) => v.id === vehicleId);
+
+            if (vehicle) {
+                setSelectedVehicleId(vehicleId);
+                showSuccessToast(`Đã chọn xe #${vehicleId}`);
+                closeQrScanner();
+            } else {
+                showErrorToast(`Xe #${vehicleId} không có trong danh sách khả dụng`);
+            }
+        } catch (e: any) {
+            showErrorToast('Không thể xử lý mã QR');
+        }
+    };
+
+    const closeQrScanner = () => {
+        // Stop scanning interval
+        if (qrScanIntervalRef.current) {
+            clearInterval(qrScanIntervalRef.current);
+            qrScanIntervalRef.current = null;
+        }
+
+        // Stop camera stream
+        if (qrStreamRef.current) {
+            qrStreamRef.current.getTracks().forEach(track => track.stop());
+            qrStreamRef.current = null;
+        }
+
+        setQrScannerOpen(false);
+    };
+
     return (
         <div className="container mx-auto px-6 py-10">
             <h1 className="text-2xl font-bold mb-6">Cổng nhân viên</h1>
@@ -557,17 +695,33 @@ const StaffPortal: React.FC = () => {
                         </div>
 
                         <div className="bg-white rounded-2xl shadow p-6">
-                            <h3 className="text-lg font-semibold mb-4">Chọn xe cho khách (đúng loại đã đặt)</h3>
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-semibold">Chọn xe cho khách (đúng loại đã đặt)</h3>
+                                {matchedType && (
+                                    <button 
+                                        onClick={openQrScanner}
+                                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                                        </svg>
+                                        Quét QR
+                                    </button>
+                                )}
+                            </div>
                             {!matchedType && <div className="text-gray-600">Không tìm thấy xe phù hợp loại đã đặt.</div>}
                             {matchedType && (
                                 <div className="space-y-3">
                                     {(matchedType.availableVehicles || []).map((v: any) => (
-                                        <label key={v.id} className="flex items-center gap-3 p-3 border rounded-lg">
-                                            <input type="radio" name="vehicle" checked={selectedVehicleId === v.id} onChange={() => setSelectedVehicleId(v.id)} />
+                                        <label key={v.id} className={`flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-all ${selectedVehicleId === v.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300'}`}>
+                                            <input type="radio" name="vehicle" checked={selectedVehicleId === v.id} onChange={() => setSelectedVehicleId(v.id)} className="w-4 h-4 text-blue-600" />
                                             <div className="flex-1">
-                                                <div className="font-medium">#{v.id}</div>
-                                                <div className="text-sm text-gray-600">Điểm: {v?.station?.address || ''}</div>
+                                                <div className="font-medium text-gray-900">Xe #{v.id}</div>
+                                                <div className="text-sm text-gray-600">📍 {v?.station?.address || 'Chưa có địa chỉ'}</div>
                                             </div>
+                                            {selectedVehicleId === v.id && (
+                                                <div className="text-blue-600 font-medium">✓</div>
+                                            )}
                                         </label>
                                     ))}
                                 </div>
@@ -632,15 +786,34 @@ const StaffPortal: React.FC = () => {
                                 <button type="button" onClick={async () => {
                                     try {
                                         if (!('mediaDevices' in navigator)) { showErrorToast('Trình duyệt không hỗ trợ camera'); return; }
-                                        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
-                                        streamRef.current = stream;
+                                        
+                                        // Mở modal trước
                                         setCameraOpen(true);
-                                        setTimeout(() => {
-                                            if (videoRef.current) {
-                                                (videoRef.current as any).srcObject = stream;
-                                                videoRef.current.play().catch(() => {});
+                                        
+                                        // Đợi modal render xong rồi mới bật camera
+                                        setTimeout(async () => {
+                                            try {
+                                                const stream = await navigator.mediaDevices.getUserMedia({ 
+                                                    video: { 
+                                                        facingMode: { ideal: 'environment' },
+                                                        width: { ideal: 1280 },
+                                                        height: { ideal: 720 }
+                                                    }, 
+                                                    audio: false 
+                                                });
+                                                streamRef.current = stream;
+                                                
+                                                if (videoRef.current) {
+                                                    videoRef.current.srcObject = stream;
+                                                    videoRef.current.onloadedmetadata = () => {
+                                                        videoRef.current?.play().catch(console.error);
+                                                    };
+                                                }
+                                            } catch (err: any) {
+                                                showErrorToast(err?.message || 'Không mở được camera');
+                                                setCameraOpen(false);
                                             }
-                                        }, 0);
+                                        }, 100);
                                     } catch (e: any) {
                                         showErrorToast(e?.message || 'Không mở được camera');
                                     }
@@ -1488,6 +1661,62 @@ const StaffPortal: React.FC = () => {
                     </div>
                 )}
             </>)}
+
+            {/* QR Scanner Modal */}
+            {qrScannerOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+                    <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-2xl mx-4">
+                        <div className="mb-4">
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">Quét mã QR trên xe</h3>
+                            <p className="text-sm text-gray-600">Đưa camera vào mã QR dán trên xe để tự động chọn xe</p>
+                        </div>
+                        
+                        <div className="relative w-full bg-black rounded-xl overflow-hidden" style={{ aspectRatio: '16/9' }}>
+                            <video 
+                                ref={qrVideoRef}
+                                className="w-full h-full object-cover"
+                                playsInline 
+                                autoPlay 
+                                muted 
+                            />
+                            
+                            {/* QR Frame Overlay */}
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                <div className="relative w-64 h-64">
+                                    {/* Corner decorations */}
+                                    <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-blue-500"></div>
+                                    <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-blue-500"></div>
+                                    <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-blue-500"></div>
+                                    <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-blue-500"></div>
+                                    
+                                    {/* Scanning line animation */}
+                                    <div className="absolute top-0 left-0 right-0 h-1 bg-blue-500 animate-pulse" style={{ animation: 'scan 2s linear infinite' }}></div>
+                                </div>
+                            </div>
+
+                            {/* Hidden canvas for QR detection */}
+                            <canvas ref={qrCanvasRef} className="hidden"></canvas>
+                        </div>
+
+                        <div className="mt-6 flex gap-3 justify-end">
+                            <button 
+                                onClick={closeQrScanner}
+                                className="px-6 py-2 rounded-lg border-2 border-gray-300 text-gray-700 hover:bg-gray-50 font-medium transition-colors"
+                            >
+                                Đóng
+                            </button>
+                        </div>
+
+                        {/* Instruction text */}
+                        <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                            <p className="text-sm text-blue-800">
+                                <span className="font-semibold">💡 Hướng dẫn:</span> Hướng camera vào mã QR trên xe. 
+                                Mã QR chứa ID xe sẽ tự động được quét và xe sẽ được chọn.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

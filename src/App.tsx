@@ -24,6 +24,7 @@ import { VehiclesManagementPage } from './pages/admin/vehiclesManagement/vehicle
 import VehicleTypesPage from './pages/admin/vehicleTypes/VehicleTypesPage';
 import RentalStationsPage from './pages/admin/rentalStations/RentalStationsPage';
 import DocumentManagementPage from './pages/admin/documents/DocumentManagementPage';
+import QRGenerator from './pages/admin/QRGenerator';
 
 
 function App() {
@@ -55,6 +56,7 @@ function App() {
                     <Route path="vehicle-types" element={<VehicleTypesPage />} />
                     <Route path="rental-stations" element={<RentalStationsPage />} />
                     <Route path="documents" element={<DocumentManagementPage />} />
+                    <Route path="qr-generator" element={<QRGenerator />} />
                 </Route>
             </Routes>
             <ToastContainer />
