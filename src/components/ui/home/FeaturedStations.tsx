@@ -1,5 +1,6 @@
 import React from 'react';
 import { MapPin } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 type Station = { id: number; name: string; address: string; available: number; total: number; distance: string };
 
@@ -8,8 +9,9 @@ interface FeaturedStationsProps {
 }
 
 const FeaturedStations: React.FC<FeaturedStationsProps> = ({ stations }) => {
+	const navigate = useNavigate();
 	return (
-		<section className="py-20 bg-white">
+		<section id="featured-stations" className="py-20 bg-white">
 			<div className="container mx-auto px-6">
 				<div className="text-center mb-16">
 					<h3 className="text-4xl font-bold text-gray-800 mb-4">Điểm thuê nổi bật</h3>
@@ -21,14 +23,11 @@ const FeaturedStations: React.FC<FeaturedStationsProps> = ({ stations }) => {
 				<div className="grid grid-cols-1 md:grid-cols-3 gap-8">
 					{stations.map((station) => (
 						<div key={station.id} className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
-							<div className="flex items-start justify-between mb-4">
-								<div className="flex-1">
-									<h4 className="text-xl font-semibold text-gray-800 mb-2">{station.name}</h4>
-									<p className="text-gray-600 text-sm mb-3">{station.address}</p>
-									<div className="flex items-center text-sm text-green-600">
-										<MapPin className="w-4 h-4 mr-1" />
-										{station.distance}
-									</div>
+							<div className="mb-4">
+								<h4 className="text-xl font-semibold text-gray-800 mb-3">{station.name}</h4>
+								<div className="flex items-start text-sm text-green-600">
+									<MapPin className="w-4 h-4 mr-1 mt-0.5 flex-shrink-0" />
+									<span className="flex-1">{station.address}</span>
 								</div>
 							</div>
 
@@ -48,9 +47,12 @@ const FeaturedStations: React.FC<FeaturedStationsProps> = ({ stations }) => {
 									></div>
 								</div>
 
-								<button className="w-full border-2 border-green-500 text-green-600 py-2 px-4 rounded-xl font-medium hover:bg-green-500 hover:text-white transition-all duration-300">
-									Xem chi tiết
-								</button>
+							<button 
+								onClick={() => navigate('/thue-xe', { state: { selectedStationId: station.id } })}
+								className="w-full border-2 border-green-500 text-green-600 py-2 px-4 rounded-xl font-medium hover:bg-green-500 hover:text-white transition-all duration-300"
+							>
+								Xem chi tiết
+							</button>
 							</div>
 						</div>
 					))}

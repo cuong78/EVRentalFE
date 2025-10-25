@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from 'react-router-dom';
 import SearchForm from "../../components/ui/rental/SearchForm";
 import VehicleTypeCard from "../../components/ui/rental/VehicleTypeCard";
 import { vehicleService } from "../../service/vehicleService";
@@ -60,6 +60,35 @@ const RentalPage: React.FC = () => {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
+	const location = useLocation();
+
+	// Auto-search khi có selectedStationId từ navigation
+	useEffect(() => {
+		const state = location.state as { selectedStationId?: number };
+		if (state?.selectedStationId) {
+			console.log('🔍 Auto-searching for station:', state.selectedStationId);
+			
+			// Tạo default search data với station đã chọn
+			// Ngày hôm nay
+			const today = new Date();
+			const tomorrow = new Date(today);
+			tomorrow.setDate(tomorrow.getDate() + 1);
+			
+			const autoSearchData: SearchData = {
+				rentalType: 'daily',
+				stationId: state.selectedStationId,
+				pickupDate: today.toISOString().split('T')[0],
+				returnDate: tomorrow.toISOString().split('T')[0]
+			};
+			
+			// Trigger search tự động
+			handleSearch(autoSearchData);
+			
+			// Clear state để tránh auto-search lại khi component re-render
+			window.history.replaceState({}, document.title);
+		}
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [location.state]);
 
 	const handleSearch = async (data: SearchData) => {
 		setSearchData(data);
@@ -116,7 +145,7 @@ const RentalPage: React.FC = () => {
 
 			{/* Search Form */}
 			<div className="mb-12">
-				<SearchForm onSearch={handleSearch} />
+				<SearchForm onSearch={handleSearch} initialSearchData={searchData} />
 			</div>
 
             {/* Results */}

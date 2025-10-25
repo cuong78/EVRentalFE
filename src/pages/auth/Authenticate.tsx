@@ -18,12 +18,15 @@ export default function Authenticate() {
             if (code) {
                 const success = await loginWithGoogle(code);
                 window.history.replaceState({}, document.title, window.location.pathname);
-                if (success) {
+                // loginWithGoogle sẽ tự động redirect theo role, không cần navigate ở đây
+                if (!success) {
+                    // Chỉ redirect về trang chủ nếu đăng nhập thất bại
                     navigate("/");
-                    return;
                 }
+            } else {
+                // Không có code thì về trang chủ
+                navigate("/");
             }
-            navigate("/");
         };
 
         handleAuthentication();

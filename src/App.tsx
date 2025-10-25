@@ -25,6 +25,7 @@ import VehicleTypesPage from './pages/admin/vehicleTypes/VehicleTypesPage';
 import RentalStationsPage from './pages/admin/rentalStations/RentalStationsPage';
 import DocumentManagementPage from './pages/admin/documents/DocumentManagementPage';
 import QRGenerator from './pages/admin/QRGenerator';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
 
 function App() {
@@ -44,13 +45,21 @@ function App() {
                     <Route path="booking/:id" element={<BookingDetail />} />
                     <Route path="payment/vnpay-return" element={<VNPayReturn />} />
                     <Route path="wallet/vnpay-return" element={<WalletTopupReturn />} />
-                    <Route path="staff" element={<StaffPortal />} />
+                    <Route path="staff" element={
+                        <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+                            <StaffPortal />
+                        </ProtectedRoute>
+                    } />
                     <Route path="contracts/print/:bookingId" element={<ContractPrint />} />
                     <Route path="ho-so" element={<UserProfile />} />
                 </Route>
                 <Route path="/verify-email" element={<VerifyEmail />} />
                 {/*admin*/}
-                <Route path="/admin" element={<AdminLayout />}>
+                <Route path="/admin" element={
+                    <ProtectedRoute allowedRoles={['ADMIN']}>
+                        <AdminLayout />
+                    </ProtectedRoute>
+                }>
                     <Route index element={<AdminPage />} />
                     <Route path="vehicles" element={<VehiclesManagementPage />} />
                     <Route path="vehicle-types" element={<VehicleTypesPage />} />

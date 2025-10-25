@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Car, MapPin, Calendar, CalendarDays } from 'lucide-react';
+import { MapPin, Calendar } from 'lucide-react';
 import { vehicleService, type Station } from '../../../service/vehicleService';
 
 interface SearchFormProps {
 	onSearch: (searchData: SearchData) => void;
+	initialSearchData?: SearchData | null;
 }
 
 interface SearchData {
@@ -13,13 +14,21 @@ interface SearchData {
 	returnDate: string;
 }
 
-const SearchForm: React.FC<SearchFormProps> = ({ onSearch }) => {
+const SearchForm: React.FC<SearchFormProps> = ({ onSearch, initialSearchData }) => {
 	const [searchData, setSearchData] = useState<SearchData>({
 		rentalType: 'daily',
 		stationId: 0,
 		pickupDate: new Date().toISOString().split('T')[0],
 		returnDate: ''
 	});
+
+	// Update search data when initialSearchData changes
+	useEffect(() => {
+		if (initialSearchData) {
+			console.log('📝 Pre-filling search form with:', initialSearchData);
+			setSearchData(initialSearchData);
+		}
+	}, [initialSearchData]);
 	const [stations, setStations] = useState<Station[]>([]);
 	const [loading, setLoading] = useState(false);
 
@@ -62,40 +71,9 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch }) => {
   return (
 		<div className="bg-white rounded-2xl shadow-xl p-8 max-w-4xl mx-auto">
 			<div className="flex justify-center mb-8">
-				<div className="bg-gray-100 rounded-xl p-1 flex">
-					<button 
-						onClick={() => handleInputChange('rentalType', 'daily')}
-						className={`px-6 py-3 rounded-lg font-medium transition-all duration-300 ${
-							searchData.rentalType === 'daily'
-								? 'bg-gradient-to-r from-green-500 to-blue-600 text-white shadow-lg'
-								: 'text-gray-600 hover:text-gray-800'
-						}`}
-					>
-						<Calendar className="inline-block w-5 h-5 mr-2" />
-						Thuê theo ngày
-					</button>
-					<button 
-						onClick={() => handleInputChange('rentalType', 'monthly')}
-						className={`px-6 py-3 rounded-lg font-medium transition-all duration-300 ${
-							searchData.rentalType === 'monthly'
-								? 'bg-gradient-to-r from-green-500 to-blue-600 text-white shadow-lg'
-								: 'text-gray-600 hover:text-gray-800'
-						}`}
-					>
-						<CalendarDays className="inline-block w-5 h-5 mr-2" />
-						Thuê theo tháng
-					</button>
-					<button 
-						onClick={() => handleInputChange('rentalType', 'yearly')}
-						className={`px-6 py-3 rounded-lg font-medium transition-all duration-300 ${
-							searchData.rentalType === 'yearly'
-								? 'bg-gradient-to-r from-green-500 to-blue-600 text-white shadow-lg'
-								: 'text-gray-600 hover:text-gray-800'
-						}`}
-					>
-						<Car className="inline-block w-5 h-5 mr-2" />
-						Thuê theo năm
-					</button>
+				<div className="bg-gradient-to-r from-green-500 to-blue-600 rounded-xl px-6 py-3 text-white shadow-lg">
+					<Calendar className="inline-block w-5 h-5 mr-2" />
+					<span className="font-medium">Thuê theo ngày</span>
 				</div>
         </div>
 
@@ -136,7 +114,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch }) => {
 					</div>
 					<div>
 						<label className="block text-sm font-medium text-gray-700 mb-2">
-							<CalendarDays className="inline-block w-4 h-4 mr-1" />
+							<Calendar className="inline-block w-4 h-4 mr-1" />
 							Ngày trả xe
 						</label>
 						<input

@@ -14,7 +14,7 @@ const VehicleTypes: React.FC<VehicleTypesProps> = ({ vehicles }) => {
 				<div className="text-center mb-16">
 					<h3 className="text-4xl font-bold text-gray-800 mb-4">Loại xe điện</h3>
 					<p className="text-xl text-gray-600 max-w-2xl mx-auto">
-						Đa dạng các loại xe điện phù hợp với mọi nhu cầu di chuyển
+						Đa dạng các  phù hợp với mọi nhu cầu di chuyển
 					</p>
 				</div>
 

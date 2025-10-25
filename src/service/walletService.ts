@@ -26,14 +26,14 @@ export const walletService = {
         if (!url) throw new Error('Không lấy được đường dẫn VNPay');
         return url;
     },
-    // GET /wallet/vnpay-return?...
+    // GET /wallet/topups/vnpay-return?...
     topupReturn: async (params: Record<string, string>): Promise<any> => {
         // Try with token first (some setups tie topup to current user), then fallback to public
         try {
-            const res = await apiClient.get(`${BASE}/payments/vnpay-return`, { params });
+            const res = await apiClient.get(`${BASE}/wallet/topups/vnpay-return`, { params });
             return res.data;
         } catch {
-            const res = await apiPublicClient.get(`${BASE}/payments/vnpay-return`, { params });
+            const res = await apiPublicClient.get(`${BASE}/wallet/topups/vnpay-return`, { params });
             return res.data;
         }
     },

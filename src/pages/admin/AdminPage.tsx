@@ -135,7 +135,7 @@ const AdminPage = () => {
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Clock className="w-4 h-4" />
                 <span>{new Date().toLocaleDateString("vi-VN")}</span>
-              </div>
+            </div>
             </div>
           </div>
         </div>

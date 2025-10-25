@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { paymentService } from '../../service/paymentService';
 import { showErrorToast, showSuccessToast } from '../../utils/show-toast';
@@ -12,6 +12,7 @@ const VNPayReturn: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState<string>('Đang xác nhận thanh toán...');
     const [invoice, setInvoice] = useState<any | null>(null);
+    const called = useRef(false); // Prevent double-call in StrictMode
     const queryParams = useMemo(() => {
         const params = new URLSearchParams(location.search);
         const obj: Record<string, string> = {};
@@ -20,6 +21,9 @@ const VNPayReturn: React.FC = () => {
     }, [location.search]);
 
     useEffect(() => {
+        if (called.current) return; // Prevent double-call in StrictMode
+        called.current = true;
+
         const run = async () => {
             try {
                 const resp = await paymentService.vnpayReturn(queryParams);
@@ -92,7 +96,8 @@ const VNPayReturn: React.FC = () => {
             }
         };
         run();
-    }, [queryParams, navigate]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     if (invoice) {
         return <BookingInvoice invoice={invoice} />;

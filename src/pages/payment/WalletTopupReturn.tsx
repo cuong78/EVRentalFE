@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { walletService } from '../../service/walletService';
 import { showErrorToast, showSuccessToast } from '../../utils/show-toast';
@@ -7,6 +7,7 @@ const WalletTopupReturn: React.FC = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const [message, setMessage] = useState('Đang xác nhận nạp ví...');
+    const called = useRef(false); // Prevent double-call in StrictMode
     const params = useMemo(() => {
         const p = new URLSearchParams(location.search);
         const o: Record<string, string> = {};
@@ -15,6 +16,9 @@ const WalletTopupReturn: React.FC = () => {
     }, [location.search]);
 
     useEffect(() => {
+        if (called.current) return; // Prevent double-call in StrictMode
+        called.current = true;
+
         const run = async () => {
             try {
                 const res = await walletService.topupReturn(params);
@@ -34,7 +38,8 @@ const WalletTopupReturn: React.FC = () => {
             }
         };
         run();
-    }, [params, navigate]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     return (
         <div className="container mx-auto px-6 py-12 text-center">

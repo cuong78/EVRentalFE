@@ -26,6 +26,15 @@ export interface Booking {
     canCancel?: boolean | null;
     totalPaid?: number | null;
     isFullyPaid?: boolean | null;
+    // Additional fields for display purposes
+    customerInfo?: {
+        fullName?: string;
+        email?: string;
+        phone?: string;
+        address?: string;
+    };
+    typeName?: string;
+    stationName?: string;
 }
 
 const BASE = `${API.BASE}`;
