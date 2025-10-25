@@ -6,10 +6,22 @@ import { tokenManager } from "../utils/token-manager";
 import axios from 'axios';
 
 const API_BASE = `${API.BASE}`;
-const API_GET_USER = `${API.USER}/accounts/myInfor`;
+const API_GET_USER = `${API.USER}/profile`;
 const API_FORGOT_PASSWORD = `${API.BASE}/forgot-password`;
 
 export const authService = {
+    getMyInfo: async (): Promise<any> => {
+        try {
+            const response = await apiClient.get(API_GET_USER);
+            const resp = response.data || {};
+            // Unwrap common response shapes
+            const data = resp.data ?? resp;
+            return data;
+        } catch (error) {
+            console.error('Failed to fetch my info', error);
+            throw error;
+        }
+    },
     register: async (data: RegisterFormData): Promise<{ data: any; message?: string }> => {
         // Backend expects: { username, password, confirmPassword, email, phone }
         // Our form uses phoneNumber → map to phone

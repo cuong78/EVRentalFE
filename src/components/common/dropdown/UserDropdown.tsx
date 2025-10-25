@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { FileText, User, LogOut } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 import AvatarLogo from '../avatar/AvatarLogo';
+import { useNavigate } from 'react-router-dom';
 
 interface UserDropdownProps {
     user: {
@@ -15,6 +16,7 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const { logout, isLoading } = useAuth();
+    const navigate = useNavigate();
 
     const handleLogout = async () => {
         await logout();
@@ -22,14 +24,12 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
     };
 
     const handleMyOrders = () => {
-        // TODO: Navigate to orders page
-        console.log('Navigate to my orders');
+        navigate('/ho-so?tab=orders');
         setIsOpen(false);
     };
 
     const handleAccount = () => {
-        // TODO: Navigate to account page
-        console.log('Navigate to account');
+        navigate('/ho-so');
         setIsOpen(false);
     };
 

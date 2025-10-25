@@ -2,15 +2,22 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { IoMdClose } from 'react-icons/io';
 import { formatNumberVN } from '../../../utils/format';
 import { useAuth } from '../../../hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
+import { authService } from '../../../service/authService';
+import { bookingService, type Booking } from '../../../service/bookingService';
+import { paymentService } from '../../../service/paymentService';
+import { showErrorToast, showSuccessToast } from '../../../utils/show-toast';
 
 export interface BookingVehicle {
     id: number;
     name: string;
     price: string;
     rentalRate?: number;
+    depositAmount?: number;
     photos?: string;
     image?: string;
     location?: string;
+    stationId?: number;
 }
 
 interface BookingModalProps {
@@ -28,6 +35,7 @@ const parsePrice = (price: string | number | undefined): number => {
 
 const BookingModal: React.FC<BookingModalProps> = ({ open, onClose, vehicle }) => {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [renterName, setRenterName] = useState('');
     const [phone, setPhone] = useState('');
     const [email, setEmail] = useState('');
@@ -35,9 +43,11 @@ const BookingModal: React.FC<BookingModalProps> = ({ open, onClose, vehicle }) =
     const [startDate, setStartDate] = useState<string>('');
     const [endDate, setEndDate] = useState<string>('');
     const [note, setNote] = useState('');
-    const [paymentMethod, setPaymentMethod] = useState<'e_wallet' | 'cash' | 'card'>('e_wallet');
+    const [paymentMethod, setPaymentMethod] = useState<'vnpay' | 'wallet'>('vnpay');
+    const [submitting, setSubmitting] = useState(false);
 
     const dailyPrice = useMemo(() => vehicle.rentalRate ?? parsePrice(vehicle.price), [vehicle]);
+    const deposit = useMemo(() => vehicle.depositAmount ?? 0, [vehicle]);
 
     const days = useMemo(() => {
         if (!startDate || !endDate) return 1;
@@ -47,16 +57,33 @@ const BookingModal: React.FC<BookingModalProps> = ({ open, onClose, vehicle }) =
         return Math.max(1, diff || 1);
     }, [startDate, endDate]);
 
-    const total = dailyPrice * days;
+    const total = dailyPrice * days + deposit;
 
     // Prefill renter name/email from logged-in user (best effort with available fields)
     useEffect(() => {
-        if (user) {
-            const name = (user as any).fullName || (user as any).username || '';
-            const mail = (user as any).email || '';
-            setRenterName(name);
-            setEmail(mail);
-        }
+        const prefillFromAuth = async () => {
+            try {
+                // Prefer data from backend to ensure latest phone/email
+                const profile = await authService.getMyInfo();
+                const name = profile?.fullName || profile?.username || (user as any)?.fullName || (user as any)?.username || '';
+                const mail = profile?.email || (user as any)?.email || '';
+                const phoneNumber = profile?.phoneNumber || profile?.phone || '';
+                setRenterName(name);
+                setEmail(mail);
+                if (!phone) setPhone(phoneNumber);
+            } catch {
+                if (user) {
+                    const name = (user as any).fullName || (user as any).username || '';
+                    const mail = (user as any).email || '';
+                    const phoneNumber = (user as any).phoneNumber || '';
+                    setRenterName(name);
+                    setEmail(mail);
+                    if (!phone) setPhone(phoneNumber);
+                }
+            }
+        };
+        if (open) prefillFromAuth();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user, open]);
 
     // Prefill pickup/return dates from last search
@@ -75,14 +102,123 @@ const BookingModal: React.FC<BookingModalProps> = ({ open, onClose, vehicle }) =
 
     const photoSrc = vehicle.photos || (vehicle.image && (vehicle.image.startsWith('http') || vehicle.image.startsWith('/')) ? vehicle.image : '');
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Placeholder submit; integrate API later
-        console.log('Booking submit', {
-            renterName, phone, email, pickup, startDate, endDate, note, paymentMethod,
-            vehicleId: vehicle.id,
-        });
-        onClose();
+        if (!startDate || !endDate) {
+            showErrorToast('Vui lòng chọn ngày nhận và ngày trả');
+            return;
+        }
+        setSubmitting(false);
+        // 1) Create booking on server
+        let booking: Booking | null = null;
+        try {
+            if (!vehicle.stationId || !vehicle.id) throw new Error('Thiếu thông tin điểm thuê hoặc loại xe');
+            booking = await bookingService.create({
+                stationId: vehicle.stationId,
+                typeId: vehicle.id,
+                startDate,
+                endDate,
+            });
+        } catch (err) {
+            console.error('Create booking failed', err);
+            // vẫn cho phép in hóa đơn tạm nếu API lỗi
+        }
+
+        // 2) Trigger payment per selected method if booking created
+        if (booking?.id) {
+            try {
+                if (paymentMethod === 'wallet') {
+                    const result = await paymentService.payWithWallet(booking.id);
+                    console.log('Wallet payment result:', result);
+                    
+                    // Check if wallet payment failed (API might return 200 with error statusCode)
+                    if (result.statusCode === 400) {
+                        // Insufficient balance - show error and redirect
+                        const errorMsg = result.message || 'Số dư ví không đủ. Vui lòng nạp thêm tiền.';
+                        showErrorToast(errorMsg);
+                        onClose();
+                        setSubmitting(false);
+                        setTimeout(() => {
+                            navigate('/ho-so?tab=orders');
+                        }, 100);
+                        return;
+                    }
+                    
+                    // Check if wallet payment succeeded
+                    if (result.statusCode === 200 || result.message?.includes('success')) {
+                        // Payment successful, reload booking and show invoice
+                        try { booking = await bookingService.getById(booking.id); } catch {}
+                        showSuccessToast('Thanh toán thành công!');
+                        // Navigate to invoice page
+                        const invoiceData = {
+                            renterName,
+                            phone,
+                            email,
+                            pickup,
+                            startDate,
+                            endDate,
+                            note,
+                            paymentMethod,
+                            vehicle: {
+                                id: vehicle.id,
+                                name: vehicle.name,
+                                image: vehicle.image,
+                                location: vehicle.location,
+                            },
+                            pricing: {
+                                dailyPrice,
+                                days,
+                                deposit,
+                                total,
+                            },
+                            booking,
+                            createdAt: new Date().toISOString(),
+                        };
+                        onClose();
+                        setSubmitting(false);
+                        navigate('/hoa-don', { state: { invoice: invoiceData } });
+                        return;
+                    }
+                } else if (paymentMethod === 'vnpay') {
+                    const payUrl = await paymentService.payWithVNPay(booking.id);
+                    if (payUrl) {
+                        setSubmitting(false);
+                        window.location.href = payUrl;
+                        return;
+                    }
+                }
+            } catch (err: any) {
+                console.error('Payment failed', err);
+                console.log('Error response:', err?.response);
+                console.log('Error response data:', err?.response?.data);
+                
+                // Extract error message from API response
+                const errorMsg = err?.response?.data?.message || err?.message || '';
+                const responseStatus = err?.response?.status || err?.response?.data?.statusCode;
+                
+                setSubmitting(false);
+                
+                // If wallet payment fails with 400 (insufficient balance), show API error and redirect
+                if (paymentMethod === 'wallet' && responseStatus === 400) {
+                    // Show exact error message from API
+                    showErrorToast(errorMsg || 'Số dư ví không đủ. Vui lòng nạp thêm tiền.');
+                    onClose();
+                    // Use setTimeout to ensure modal closes before navigation
+                    setTimeout(() => {
+                        navigate('/ho-so?tab=orders');
+                    }, 100);
+                    return;
+                }
+                
+                // For other errors, show error but keep modal open
+                showErrorToast(errorMsg || 'Thanh toán thất bại');
+                return;
+            }
+        }
+
+        // Fallback: if no payment method matched or booking creation failed
+        setSubmitting(false);
+        showErrorToast('Đã có lỗi xảy ra. Vui lòng thử lại.');
     };
 
     return (
@@ -132,18 +268,41 @@ const BookingModal: React.FC<BookingModalProps> = ({ open, onClose, vehicle }) =
                                 <textarea value={note} onChange={(e) => setNote(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" rows={3} />
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                <div>
-                                    <label className="block text-sm text-gray-600 mb-1">Phương thức thanh toán</label>
-                                    <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value as any)} className="w-full border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
-                                        <option value="e_wallet">QR và ví điện tử</option>
-                                        <option value="card">Thẻ ngân hàng</option>
-                                        <option value="cash">Tiền mặt</option>
-                                    </select>
+                            <div>
+                                <label className="block text-sm text-gray-600 mb-2">Phương thức thanh toán</label>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <label className={`flex items-center gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all ${paymentMethod === 'vnpay' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                                        <input type="radio" name="paymentMethod" value="vnpay" checked={paymentMethod === 'vnpay'} onChange={(e) => setPaymentMethod(e.target.value as any)} className="w-4 h-4 text-blue-600" />
+                                        <div className="flex items-center gap-2">
+                                            <img src="https://tse3.mm.bing.net/th/id/OIP.kklIaX3TV97u5KnjU_Kr4wHaHa?rs=1&pid=ImgDetMain" alt="VNPay" className="w-10 h-10 object-contain" />
+                                            <div>
+                                                <div className="font-semibold text-gray-800">VNPay</div>
+                                                <div className="text-xs text-gray-500">Cổng thanh toán</div>
+                                            </div>
+                                        </div>
+                                    </label>
+                                    <label className={`flex items-center gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all ${paymentMethod === 'wallet' ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                                        <input type="radio" name="paymentMethod" value="wallet" checked={paymentMethod === 'wallet'} onChange={(e) => setPaymentMethod(e.target.value as any)} className="w-4 h-4 text-green-600" />
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
+                                                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <div className="font-semibold text-gray-800">Ví EVWallet</div>
+                                                <div className="text-xs text-gray-500">Thanh toán nhanh</div>
+                                            </div>
+                                        </div>
+                                    </label>
                                 </div>
                             </div>
 
-                            <button type="submit" className="w-full bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white py-3.5 rounded-xl font-semibold transform transition-all duration-300">Thanh toán {formatNumberVN(total)}đ</button>
+                            <div className="text-sm text-gray-500 mb-2">
+                                <div className="flex justify-between"><span>Tiền thuê</span><span>{formatNumberVN(dailyPrice)}đ x {days} ngày = {formatNumberVN(dailyPrice * days)}đ</span></div>
+                                <div className="flex justify-between"><span>Đặt cọc</span><span>{formatNumberVN(deposit)}đ</span></div>
+                            </div>
+                            <button disabled={submitting} type="submit" className={`w-full bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white py-3.5 rounded-xl font-semibold transform transition-all duration-300 ${submitting ? 'opacity-60 cursor-not-allowed' : ''}`}>{submitting ? 'Đang xử lý...' : `Thanh toán ${formatNumberVN(total)}đ`}</button>
                         </form>
                     </div>
 
@@ -162,6 +321,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ open, onClose, vehicle }) =
                         <div className="space-y-2 text-[15px]">
                             <div className="flex justify-between"><span>Đơn giá</span><span className="font-medium">{formatNumberVN(dailyPrice)}đ/ngày</span></div>
                             <div className="flex justify-between"><span>Số ngày</span><span className="font-medium">{days}</span></div>
+                            <div className="flex justify-between"><span>Đặt cọc</span><span className="font-medium">{formatNumberVN(deposit)}đ</span></div>
                             <div className="flex justify-between text-xl pt-3 border-t"><span className="font-semibold">Thanh toán*</span><span className="font-extrabold text-green-600">{formatNumberVN(total)}đ</span></div>
                         </div>
                     </aside>

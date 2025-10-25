@@ -1,27 +1,19 @@
 import React, { useState } from "react";
+import { useNavigate } from 'react-router-dom';
 import SearchForm from "../../components/ui/rental/SearchForm";
-import VehicleCard from "../../components/ui/rental/VehicleCard";
+import VehicleTypeCard from "../../components/ui/rental/VehicleTypeCard";
 import { vehicleService } from "../../service/vehicleService";
 import { type VehicleSearchResponse, type VehicleSearchParams } from "../../service/vehicleService";
 
 // Import Vehicle type from VehicleCard
-interface Vehicle {
-	id: number;
-	name: string;
-	type: string;
-	battery: number;
-	price: string;
-	image: string;
-	features: string[];
-	location: string;
-	available: boolean;
-	rating: number;
-	reviews: number;
-	depositAmount?: number;
-	rentalRate?: number;
-	status?: string;
-	conditionNotes?: string;
-	photos?: string;
+interface VehicleTypeViewModel {
+    id: number;
+    name: string;
+    availableCount: number;
+    rentalRate: number;
+    depositAmount: number;
+    image: string;
+    features: string[];
 }
 
 interface SearchData {
@@ -63,10 +55,11 @@ const getVehicleFeatures = (typeName: string): string[] => {
 };
 
 const RentalPage: React.FC = () => {
-	const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+    const [vehicleTypes, setVehicleTypes] = useState<VehicleTypeViewModel[]>([]);
 	const [searchData, setSearchData] = useState<SearchData | null>(null);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+    const navigate = useNavigate();
 
 	const handleSearch = async (data: SearchData) => {
 		setSearchData(data);
@@ -81,41 +74,33 @@ const RentalPage: React.FC = () => {
 				endDate: data.returnDate
 			};
 			
-			const response: VehicleSearchResponse = await vehicleService.searchVehicles(searchParams);
-			
-			// Transform API response to match our VehicleCard component
-			const transformedVehicles = response.data.vehicleTypes.flatMap(vehicleType => 
-				vehicleType.availableVehicles.map(vehicle => ({
-					id: vehicle.id,
-					name: vehicleType.typeName,
-					type: vehicleType.typeName,
-					battery: 85, // Default value since not in API
-					price: vehicleType.rentalRate.toString(),
-					image: getVehicleIcon(vehicleType.typeName),
-					photos: (vehicle as any).photos,
-					features: getVehicleFeatures(vehicleType.typeName),
-					location: vehicle.station.address,
-					available: true, // All vehicles in availableVehicles are available
-					rating: 4.5, // Default rating
-					reviews: 100, // Default reviews
-					depositAmount: vehicleType.depositAmount,
-					rentalRate: vehicleType.rentalRate
-				}))
-			);
-			
-			setVehicles(transformedVehicles);
+            const response: VehicleSearchResponse = await vehicleService.searchVehicles(searchParams);
+
+            // Transform API response to show vehicle TYPES instead of individual vehicles
+            const transformedTypes: VehicleTypeViewModel[] = response.data.vehicleTypes.map(vt => ({
+                id: vt.typeId,
+                name: vt.typeName,
+                availableCount: vt.availableCount,
+                rentalRate: vt.rentalRate,
+                depositAmount: vt.depositAmount,
+                image: getVehicleIcon(vt.typeName),
+                features: getVehicleFeatures(vt.typeName)
+            }));
+
+            setVehicleTypes(transformedTypes);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : 'Có lỗi xảy ra khi tìm kiếm xe');
-			setVehicles([]);
+            setVehicleTypes([]);
 		} finally {
 			setLoading(false);
 		}
 	};
 
-	const handleVehicleSelect = (vehicle: Vehicle) => {
-		console.log('Selected vehicle:', vehicle);
-		// Handle vehicle selection logic here
-	};
+    const handleTypeSelect = (typeName: string) => {
+        const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        const slug = slugify(typeName);
+        navigate(`/thue-xe/${slug}`);
+    };
 
 	return (
 		<div className="container mx-auto px-6 py-12">
@@ -134,14 +119,14 @@ const RentalPage: React.FC = () => {
 				<SearchForm onSearch={handleSearch} />
 			</div>
 
-			{/* Results */}
+            {/* Results */}
 			{searchData && (
 				<div className="mb-8">
 					<h2 className="text-2xl font-bold text-gray-800 mb-2">
 						Kết quả tìm kiếm
 					</h2>
 					<p className="text-gray-600 mb-4">
-						Tìm thấy {vehicles.length} xe có sẵn tại điểm thuê
+                        Tìm thấy {vehicleTypes.length} loại xe có sẵn tại điểm thuê
 					</p>
 					<div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
 						<p className="text-sm text-blue-800">
@@ -179,25 +164,31 @@ const RentalPage: React.FC = () => {
 				</div>
 			)}
 
-			{/* Vehicle Grid */}
-			{!loading && !error && vehicles.length > 0 && (
-				<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-					{vehicles.map((vehicle) => (
-						<VehicleCard 
-							key={vehicle.id} 
-							vehicle={vehicle} 
-							onSelect={handleVehicleSelect}
-						/>
-					))}
-				</div>
-			)}
+            {/* Vehicle Type Grid */}
+            {!loading && !error && vehicleTypes.length > 0 && (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {vehicleTypes.map((vt) => (
+                        <VehicleTypeCard
+                            key={vt.id}
+                            id={vt.id}
+                            name={vt.name}
+                            availableCount={vt.availableCount}
+                            rentalRate={vt.rentalRate}
+                            depositAmount={vt.depositAmount}
+                            image={vt.image}
+                            features={vt.features}
+                            onSelect={handleTypeSelect}
+                        />
+                    ))}
+                </div>
+            )}
 
-			{/* No results message */}
-			{!loading && !error && vehicles.length === 0 && searchData && (
+            {/* No results message */}
+            {!loading && !error && vehicleTypes.length === 0 && searchData && (
 				<div className="text-center py-12">
 					<div className="text-6xl mb-4">🔍</div>
 					<h3 className="text-xl font-semibold text-gray-800 mb-2">
-						Không tìm thấy xe phù hợp
+                        Không tìm thấy loại xe phù hợp
 					</h3>
 					<p className="text-gray-600 mb-6">
 						Vui lòng thử lại với thông tin tìm kiếm khác

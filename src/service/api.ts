@@ -60,13 +60,21 @@ apiClient.interceptors.response.use(
             return handle401(originalRequest, apiClient);
         }
 
+        // Skip auto-toast if request has skipErrorToast flag
+        const skipToast = originalRequest?.skipErrorToast;
+
         // ✅ Nếu lỗi khác (403, 500, etc)
-        if (status === 403) {
-            showErrorToast("Không có quyền truy cập");
-        } else if (status === 500) {
-            showErrorToast("Lỗi hệ thống");
-        } else if (!originalRequest?.url?.includes('/logout')) {
-            showErrorToast(apiMessage);
+        if (!skipToast) {
+            // Skip auto-toast for all payment endpoints - let components handle it
+            if (originalRequest?.url?.includes('/payments/')) {
+                // Do nothing - component will show custom message
+            } else if (status === 403) {
+                showErrorToast("Không có quyền truy cập");
+            } else if (status === 500) {
+                showErrorToast("Lỗi hệ thống");
+            } else if (!originalRequest?.url?.includes('/logout')) {
+                showErrorToast(apiMessage);
+            }
         }
 
         return Promise.reject(error);
