@@ -64,6 +64,32 @@ export const bookingService = {
         const response = await apiClient.get(`${BASE}/bookings/phone/${encodeURIComponent(phone)}/active`);
         return response.data as Booking[];
     },
+
+    // Admin API - Get bookings by status
+    getByStatus: async (status: 'PENDING' | 'CONFIRMED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED'): Promise<Booking[]> => {
+        const response = await apiClient.get(`${BASE}/bookings/status/${status}`);
+        return response.data as Booking[];
+    },
+
+    // Admin API - Get booking detail
+    getDetail: async (id: string): Promise<any> => {
+        const response = await apiClient.get(`${BASE}/bookings/${id}/detail`);
+        return response.data;
+    },
+
+    // Cancel booking
+    cancel: async (id: string): Promise<{
+        bookingId: string;
+        message: string;
+        refundAmount: number;
+        refundPercentage: number;
+        refundReason: string;
+        cancelledAt: string;
+        walletBalance: number;
+    }> => {
+        const response = await apiClient.post(`${BASE}/bookings/${id}/cancel`);
+        return response.data;
+    },
 };
 
 

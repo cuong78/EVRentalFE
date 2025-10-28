@@ -25,33 +25,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
 
             try {
-                // Chỉ kiểm tra token có tồn tại trong localStorage
-                if (token) {
-                    // Tạo user object cơ bản từ token
-                    const basicUser = {
-                        userId: 0,
-                        username: "User",
-                        fullName: "User",
-                        email: "",
-                        phoneNumber: "",
-                        identityCard: "",
-                        gender: 'OTHER' as const,
-                        dateOfBirth: "",
-                        address: "",
-                        avatarUrl: "",
-                        memberScore: 0,
-                        status: 'ACTIVE' as const,
-                        deleted: false,
-                        roles: [],
-                        permissions: []
-                    };
-                    setUser(basicUser);
-                } else {
-                    setUser(null);
-                }
+                // Fetch thông tin user thật từ API nếu có token
+                console.log("🔄 AuthContext: Token found, fetching user profile...");
+                const profileData = await authService.getMyInfo();
+                console.log("✅ AuthContext: User profile loaded:", profileData);
+                
+                const userInfo = {
+                    userId: profileData.userId || 0,
+                    username: profileData.username || "User",
+                    fullName: profileData.fullName || profileData.username || "User",
+                    email: profileData.email || "",
+                    phoneNumber: profileData.phoneNumber || profileData.phone || "",
+                    identityCard: profileData.identityCard || "",
+                    gender: (profileData.gender || 'OTHER') as 'MALE' | 'FEMALE' | 'OTHER',
+                    dateOfBirth: profileData.dateOfBirth || "",
+                    address: profileData.address || "",
+                    avatarUrl: profileData.avatarUrl || "",
+                    memberScore: profileData.memberScore || 0,
+                    status: (profileData.status || 'ACTIVE') as 'ACTIVE' | 'INACTIVE' | 'BANNED' | string,
+                    deleted: profileData.deleted || false,
+                    roles: profileData.roles || [],
+                    permissions: profileData.permissions || []
+                };
+                
+                setUser(userInfo);
             } catch (error) {
-                console.error('Error checking token:', error);
+                console.error('❌ AuthContext: Error fetching user info:', error);
+                // Nếu API fail (token expired, etc), clear user
                 setUser(null);
+                tokenManager.removeToken();
             }
 
             setLoading(false);

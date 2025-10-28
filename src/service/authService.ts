@@ -22,6 +22,22 @@ export const authService = {
             throw error;
         }
     },
+
+    // Get user by phone number
+    getUserByPhone: async (phone: string): Promise<any> => {
+        try {
+            const response = await apiClient.get(`${API.BASE}/user/by-phone`, {
+                params: { phone }
+            });
+            const resp = response.data || {};
+            // Unwrap common response shapes
+            const data = resp.data ?? resp;
+            return data;
+        } catch (error) {
+            console.error('Failed to fetch user by phone', error);
+            throw error;
+        }
+    },
     register: async (data: RegisterFormData): Promise<{ data: any; message?: string }> => {
         // Backend expects: { username, password, confirmPassword, email, phone }
         // Our form uses phoneNumber → map to phone

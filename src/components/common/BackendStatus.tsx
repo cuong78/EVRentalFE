@@ -10,7 +10,7 @@ export const BackendStatus: React.FC = () => {
         try {
             // Sử dụng XMLHttpRequest để test connection
             const xhr = new XMLHttpRequest();
-            xhr.open('GET', 'http://145.79.13.143:8080/swagger-ui/index.html', true);
+            xhr.open('GET', 'http://localhost:8080/swagger-ui/index.html', true);
             xhr.timeout = 5000; // 5 seconds timeout
             
             xhr.onload = () => {

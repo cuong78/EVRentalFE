@@ -25,6 +25,7 @@ import VehicleTypesPage from './pages/admin/vehicleTypes/VehicleTypesPage';
 import RentalStationsPage from './pages/admin/rentalStations/RentalStationsPage';
 import DocumentManagementPage from './pages/admin/documents/DocumentManagementPage';
 import QRGenerator from './pages/admin/QRGenerator';
+import BookingManagementPage from './pages/admin/bookings/BookingManagementPage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
 
@@ -64,6 +65,7 @@ function App() {
                     <Route path="vehicles" element={<VehiclesManagementPage />} />
                     <Route path="vehicle-types" element={<VehicleTypesPage />} />
                     <Route path="rental-stations" element={<RentalStationsPage />} />
+                    <Route path="bookings" element={<BookingManagementPage />} />
                     <Route path="documents" element={<DocumentManagementPage />} />
                     <Route path="qr-generator" element={<QRGenerator />} />
                 </Route>

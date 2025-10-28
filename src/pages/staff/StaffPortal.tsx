@@ -7,6 +7,7 @@ import { contractService } from '../../service/contractService';
 import { useNavigate } from 'react-router-dom';
 import { returnTransactionService } from '../../service/returnTransactionService';
 import { documentService } from '../../service/documentService';
+import { authService } from '../../service/authService';
 import jsQR from 'jsqr';
 
 interface AvailableChoice {
@@ -40,21 +41,20 @@ const StaffPortal: React.FC = () => {
     const [returnFiles, setReturnFiles] = useState<File[] | null>(null);
     
     // Document upload states
-    const [docUserId, setDocUserId] = useState('');
-    const [docType, setDocType] = useState('CMND');
+    const [docUserPhone, setDocUserPhone] = useState('');
+    const [docType, setDocType] = useState('CCCD');
     const [docNumber, setDocNumber] = useState('');
     const [frontPhoto, setFrontPhoto] = useState<File | null>(null);
     const [backPhoto, setBackPhoto] = useState<File | null>(null);
     const [issueDate, setIssueDate] = useState('');
     const [expiryDate, setExpiryDate] = useState('');
     const [issuedBy, setIssuedBy] = useState('');
-    const [isDefault, setIsDefault] = useState(false);
+    const [isDefault, setIsDefault] = useState(true);
     const frontPhotoInputRef = useRef<HTMLInputElement | null>(null);
     const backPhotoInputRef = useRef<HTMLInputElement | null>(null);
     
     // Document search states
-    const [searchUserId, setSearchUserId] = useState('');
-    const [searchDocId, setSearchDocId] = useState('');
+    const [searchPhone, setSearchPhone] = useState('');
     const [documents, setDocuments] = useState<any[]>([]);
     const [viewingDoc, setViewingDoc] = useState<any | null>(null);
     const [loadingDetail, setLoadingDetail] = useState(false);
@@ -170,8 +170,8 @@ const StaffPortal: React.FC = () => {
     };
     
     const handleDocumentUpload = async () => {
-        if (!docUserId || !docNumber) {
-            showErrorToast('Vui lòng nhập đầy đủ User ID và Số giấy tờ');
+        if (!docUserPhone || !docNumber) {
+            showErrorToast('Vui lòng nhập đầy đủ số điện thoại và Số giấy tờ');
             return;
         }
         if (!frontPhoto || !backPhoto) {
@@ -181,8 +181,17 @@ const StaffPortal: React.FC = () => {
         
         try {
             setLoading(true);
+            
+            // Step 1: Get user by phone
+            const user = await authService.getUserByPhone(docUserPhone);
+            if (!user || !user.userId) {
+                showErrorToast('Không tìm thấy người dùng với số điện thoại này');
+                return;
+            }
+            
+            // Step 2: Upload document with userId
             await documentService.create({
-                userId: Number(docUserId),
+                userId: user.userId,
                 documentType: docType,
                 documentNumber: docNumber,
                 frontPhoto,
@@ -192,16 +201,18 @@ const StaffPortal: React.FC = () => {
                 issuedBy: issuedBy || undefined,
                 default: isDefault,
             });
-            showSuccessToast('Upload giấy tờ thành công!');
+            showSuccessToast(`Upload giấy tờ thành công cho ${user.username || user.phone}!`);
+            
             // Reset form
-            setDocUserId('');
+            setDocUserPhone('');
+            setDocType('CCCD');
             setDocNumber('');
             setFrontPhoto(null);
             setBackPhoto(null);
             setIssueDate('');
             setExpiryDate('');
             setIssuedBy('');
-            setIsDefault(false);
+            setIsDefault(true);
         } catch (e: any) {
             showErrorToast(e?.response?.data?.message || e?.message || 'Upload giấy tờ thất bại');
         } finally {
@@ -210,18 +221,27 @@ const StaffPortal: React.FC = () => {
     };
     
     const handleSearchDocuments = async () => {
-        if (!searchUserId) {
-            showErrorToast('Vui lòng nhập User ID');
+        if (!searchPhone) {
+            showErrorToast('Vui lòng nhập số điện thoại');
             return;
         }
         try {
             setLoading(true);
-            const docs = await documentService.getByUserId(Number(searchUserId));
+            // Step 1: Get user by phone
+            const user = await authService.getUserByPhone(searchPhone);
+            if (!user || !user.userId) {
+                showErrorToast('Không tìm thấy người dùng với số điện thoại này');
+                setDocuments([]);
+                return;
+            }
+            
+            // Step 2: Get documents by userId
+            const docs = await documentService.getByUserId(user.userId);
             setDocuments(docs);
             if (docs.length === 0) {
                 showErrorToast('Không tìm thấy giấy tờ nào');
             } else {
-                showSuccessToast(`Tìm thấy ${docs.length} giấy tờ`);
+                showSuccessToast(`Tìm thấy ${docs.length} giấy tờ (User: ${user.username || user.phone})`);
             }
         } catch (e: any) {
             showErrorToast(e?.response?.data?.message || e?.message || 'Không thể tải giấy tờ');
@@ -236,7 +256,7 @@ const StaffPortal: React.FC = () => {
             setLoading(true);
             const docs = await documentService.getAll();
             setDocuments(docs);
-            setSearchUserId(''); // Clear search input
+            setSearchPhone(''); // Clear search input
             if (docs.length === 0) {
                 showErrorToast('Không có giấy tờ nào trong hệ thống');
             } else {
@@ -259,25 +279,6 @@ const StaffPortal: React.FC = () => {
             showErrorToast(e?.response?.data?.message || e?.message || 'Không thể tải chi tiết giấy tờ');
         } finally {
             setLoadingDetail(false);
-        }
-    };
-    
-    const handleSearchByDocId = async () => {
-        if (!searchDocId) {
-            showErrorToast('Vui lòng nhập Document ID');
-            return;
-        }
-        try {
-            setLoading(true);
-            const doc = await documentService.getById(Number(searchDocId));
-            setDocuments([doc]); // Hiển thị 1 document trong array
-            setSearchUserId(''); // Clear user ID search
-            showSuccessToast('Tìm thấy giấy tờ');
-        } catch (e: any) {
-            showErrorToast(e?.response?.data?.message || e?.message || 'Không tìm thấy giấy tờ');
-            setDocuments([]);
-        } finally {
-            setLoading(false);
         }
     };
     
@@ -414,10 +415,8 @@ const StaffPortal: React.FC = () => {
             
             // Refresh danh sách nếu đang hiển thị
             if (documents.length > 0) {
-                if (searchUserId) {
+                if (searchPhone) {
                     await handleSearchDocuments();
-                } else if (searchDocId) {
-                    await handleSearchByDocId();
                 } else {
                     await handleGetAllDocuments();
                 }
@@ -450,11 +449,8 @@ const StaffPortal: React.FC = () => {
             
             // Refresh danh sách
             if (documents.length > 0) {
-                if (searchUserId) {
+                if (searchPhone) {
                     await handleSearchDocuments();
-                } else if (searchDocId) {
-                    setDocuments([]);
-                    setSearchDocId('');
                 } else {
                     await handleGetAllDocuments();
                 }
@@ -909,49 +905,27 @@ const StaffPortal: React.FC = () => {
                 {/* Search documents section */}
                 <div className="bg-white rounded-2xl shadow p-6 mb-6">
                     <h2 className="text-xl font-semibold mb-4">🔍 Tìm kiếm giấy tờ</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div className="flex gap-3 items-end">
+                    <div className="flex gap-4 mb-4">
+                        <div className="flex-1 flex gap-3 items-end">
                             <div className="flex-1">
-                                <label className="block text-sm text-gray-600 mb-1">User ID</label>
+                                <label className="block text-sm text-gray-600 mb-1">Số điện thoại</label>
                                 <input 
-                                    type="number" 
-                                    value={searchUserId} 
-                                    onChange={(e) => setSearchUserId(e.target.value)} 
+                                    type="text" 
+                                    value={searchPhone} 
+                                    onChange={(e) => setSearchPhone(e.target.value)} 
                                     onKeyPress={(e) => e.key === 'Enter' && handleSearchDocuments()}
                                     className="w-full border border-gray-200 rounded-lg px-3 py-2" 
-                                    placeholder="Tìm theo User ID..."
+                                    placeholder="Nhập số điện thoại..."
                                 />
                             </div>
                             <button 
                                 onClick={handleSearchDocuments}
-                                disabled={loading || !searchUserId}
-                                className={`px-5 py-2 h-10 rounded-lg text-white font-semibold whitespace-nowrap ${loading || !searchUserId ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+                                disabled={loading || !searchPhone}
+                                className={`px-5 py-2 h-10 rounded-lg text-white font-semibold whitespace-nowrap ${loading || !searchPhone ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
                             >
                                 {loading ? 'Đang tìm...' : 'Tìm'}
                             </button>
                         </div>
-                        <div className="flex gap-3 items-end">
-                            <div className="flex-1">
-                                <label className="block text-sm text-gray-600 mb-1">Document ID</label>
-                                <input 
-                                    type="number" 
-                                    value={searchDocId} 
-                                    onChange={(e) => setSearchDocId(e.target.value)} 
-                                    onKeyPress={(e) => e.key === 'Enter' && handleSearchByDocId()}
-                                    className="w-full border border-gray-200 rounded-lg px-3 py-2" 
-                                    placeholder="Tìm theo Document ID..."
-                                />
-                            </div>
-                            <button 
-                                onClick={handleSearchByDocId}
-                                disabled={loading || !searchDocId}
-                                className={`px-5 py-2 h-10 rounded-lg text-white font-semibold whitespace-nowrap ${loading || !searchDocId ? 'bg-gray-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700'}`}
-                            >
-                                {loading ? 'Đang tìm...' : 'Tìm'}
-                            </button>
-                        </div>
-                    </div>
-                    <div className="flex justify-end">
                         <button 
                             onClick={handleGetAllDocuments}
                             disabled={loading}
@@ -1023,13 +997,13 @@ const StaffPortal: React.FC = () => {
                         {/* Left column - Form inputs */}
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm text-gray-600 mb-1">User ID khách hàng <span className="text-red-500">*</span></label>
+                                <label className="block text-sm text-gray-600 mb-1">Số điện thoại khách hàng <span className="text-red-500">*</span></label>
                                 <input 
-                                    type="number" 
-                                    value={docUserId} 
-                                    onChange={(e) => setDocUserId(e.target.value)} 
+                                    type="text" 
+                                    value={docUserPhone} 
+                                    onChange={(e) => setDocUserPhone(e.target.value)} 
                                     className="w-full border border-gray-200 rounded-lg px-3 py-2" 
-                                    placeholder="Nhập User ID..."
+                                    placeholder="Nhập số điện thoại..."
                                     required 
                                 />
                             </div>
@@ -1226,21 +1200,22 @@ const StaffPortal: React.FC = () => {
                     <div className="mt-6 flex gap-3">
                         <button 
                             onClick={handleDocumentUpload}
-                            disabled={loading || !docUserId || !docNumber || !frontPhoto || !backPhoto}
-                            className={`px-6 py-3 rounded-lg text-white font-semibold ${loading || !docUserId || !docNumber || !frontPhoto || !backPhoto ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}`}
+                            disabled={loading || !docUserPhone || !docNumber || !frontPhoto || !backPhoto}
+                            className={`px-6 py-3 rounded-lg text-white font-semibold ${loading || !docUserPhone || !docNumber || !frontPhoto || !backPhoto ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}`}
                         >
                             {loading ? 'Đang upload...' : '✓ Upload giấy tờ'}
                         </button>
                         <button 
                             onClick={() => {
-                                setDocUserId('');
+                                setDocUserPhone('');
+                                setDocType('CCCD');
                                 setDocNumber('');
                                 setFrontPhoto(null);
                                 setBackPhoto(null);
                                 setIssueDate('');
                                 setExpiryDate('');
                                 setIssuedBy('');
-                                setIsDefault(false);
+                                setIsDefault(true);
                             }}
                             className="px-6 py-3 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
                         >

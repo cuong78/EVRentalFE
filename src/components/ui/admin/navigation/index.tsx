@@ -24,7 +24,7 @@ export const Navigation = ({ collapsed = false }: NavigationProps) => {
     { label: "Quản Lý Loại Xe", href: "/admin/vehicle-types", icon: <MdCategory /> },
 
     // Quản Lý Thuê Xe & Thanh Toán
-    { label: "Quản Lý Thuê Xe", href: "/admin/booking", icon: <FaTicketAlt /> },
+    { label: "Quản Lý Thuê Xe", href: "/admin/bookings", icon: <FaTicketAlt /> },
     { label: "Quản Lý Hồ Sơ Khách Hàng", href: "/admin/documents", icon: <FaUserCircle /> },
     { label: "Quản Lý Thanh Toán", href: "/admin/payment-management", icon: <FaMoneyBillWave /> },
     { label: "Quản Lý Hợp Đồng", href: "/admin/contract", icon: <FaFileContract /> },

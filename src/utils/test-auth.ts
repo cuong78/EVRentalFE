@@ -68,7 +68,7 @@ export const testAuth = {
         console.log('🧪 Testing API Connection...');
         try {
             // Test với register endpoint (đơn giản hơn)
-            const response = await fetch('http://145.79.13.143:8080/api/register', {
+            const response = await fetch('http://localhost:8080/api/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

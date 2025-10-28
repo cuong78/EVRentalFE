@@ -40,6 +40,10 @@ const UserProfile: React.FC = () => {
     const [payingBookingId, setPayingBookingId] = useState<string | null>(null);
     const [paymentModalOpen, setPaymentModalOpen] = useState(false);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'vnpay' | 'wallet'>('vnpay');
+    const [cancelModalOpen, setCancelModalOpen] = useState(false);
+    const [cancellingBooking, setCancellingBooking] = useState<Booking | null>(null);
+    const [cancelLoading, setCancelLoading] = useState(false);
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
 
     useEffect(() => {
         setActiveTab(tabParam === 'orders' ? 'orders' : 'profile');
@@ -64,22 +68,25 @@ const UserProfile: React.FC = () => {
             }
         };
         loadOrders();
-    }, [activeTab, profile]);
+    }, [activeTab, profile, refreshTrigger]);
+
+    // Load profile function that can be called multiple times
+    const loadProfile = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await authService.getMyInfo();
+            setProfile(data);
+        } catch (e: any) {
+            setError(e?.message || 'Không thể tải hồ sơ');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const load = async () => {
-            setLoading(true);
-            setError(null);
-            try {
-                const data = await authService.getMyInfo();
-                setProfile(data);
-            } catch (e: any) {
-                setError(e?.message || 'Không thể tải hồ sơ');
-            } finally {
-                setLoading(false);
-            }
-        };
-        load();
+        loadProfile();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
 
@@ -203,6 +210,68 @@ const UserProfile: React.FC = () => {
         }
     };
 
+    // Calculate refund percentage based on business rules
+    const calculateRefund = (booking: Booking): { percentage: number; amount: number; reason: string } => {
+        if (booking.status === 'PENDING') {
+            return { percentage: 0, amount: 0, reason: 'Chưa thanh toán' };
+        }
+
+        if (booking.status === 'CONFIRMED') {
+            const now = new Date();
+            const startDate = new Date(booking.startDate);
+            const hoursUntilStart = (startDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+            if (hoursUntilStart < 0) {
+                // Quá giờ nhận xe
+                return { percentage: 0, amount: 0, reason: 'Đã quá giờ nhận xe' };
+            } else if (hoursUntilStart >= 24) {
+                // >= 24h trước giờ nhận
+                const refundAmount = booking.totalPaid || booking.totalPayment || 0;
+                return { percentage: 100, amount: refundAmount, reason: 'Hủy trước 24 giờ' };
+            } else {
+                // < 24h trước giờ nhận
+                const refundAmount = ((booking.totalPaid || booking.totalPayment || 0) * 0.5);
+                return { percentage: 50, amount: refundAmount, reason: 'Hủy trong vòng 24 giờ' };
+            }
+        }
+
+        return { percentage: 0, amount: 0, reason: 'Không thể hủy' };
+    };
+
+    const handleCancelBooking = async () => {
+        if (!cancellingBooking) return;
+
+        setCancelLoading(true);
+        try {
+            const result = await bookingService.cancel(cancellingBooking.id);
+            
+            // Show success message with refund info
+            if (result.refundAmount > 0) {
+                showSuccessToast(
+                    `Đã hủy đơn hàng thành công! Hoàn ${formatNumberVN(result.refundAmount)}đ (${result.refundPercentage}%) vào ví. Số dư: ${formatNumberVN(result.walletBalance)}đ`
+                );
+            } else {
+                showSuccessToast(result.message || 'Đã hủy đơn hàng thành công!');
+            }
+            
+            setCancelModalOpen(false);
+            setCancellingBooking(null);
+            
+            // Reload orders and profile (to update wallet balance)
+            setRefreshTrigger(prev => prev + 1);
+            loadProfile();
+        } catch (e: any) {
+            showErrorToast(e?.response?.data?.message || e?.message || 'Không thể hủy đơn hàng');
+        } finally {
+            setCancelLoading(false);
+        }
+    };
+
+    const openCancelModal = (booking: Booking) => {
+        setCancellingBooking(booking);
+        setCancelModalOpen(true);
+    };
+
     return (
         <div className="container mx-auto px-6 py-12">
             <div className="mb-6">
@@ -280,6 +349,7 @@ const UserProfile: React.FC = () => {
                                         <th className="py-2 pr-4">Tổng tiền</th>
                                         <th className="py-2 pr-4">Trạng thái</th>
                                         <th className="py-2 pr-4">Thanh toán</th>
+                                        <th className="py-2 pr-4">Thao tác</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -298,10 +368,15 @@ const UserProfile: React.FC = () => {
                                                     <button onClick={() => { setPayingBookingId(o.id); setPaymentModalOpen(true); }} className="px-3 py-1 bg-gradient-to-r from-green-500 to-blue-600 text-white rounded-lg text-xs hover:shadow-md transition">Thanh toán</button>
                                                 )}
                                             </td>
+                                            <td className="py-2 pr-4">
+                                                {(o.status === 'PENDING' || o.status === 'CONFIRMED') && (
+                                                    <button onClick={() => openCancelModal(o)} className="px-3 py-1 bg-red-500 text-white rounded-lg text-xs hover:bg-red-600 transition">Hủy đơn</button>
+                                                )}
+                                            </td>
                                         </tr>
                                     ))}
                                     {orders && orders.length === 0 && (
-                                        <tr><td className="py-3 text-gray-600" colSpan={5}>Chưa có đơn hàng</td></tr>
+                                        <tr><td className="py-3 text-gray-600" colSpan={6}>Chưa có đơn hàng</td></tr>
                                     )}
                                 </tbody>
                             </table>
@@ -394,6 +469,70 @@ const UserProfile: React.FC = () => {
                         <div className="flex justify-end gap-2 mt-6">
                             <button onClick={() => !topupLoading && setPaymentModalOpen(false)} className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700">Hủy</button>
                             <button disabled={topupLoading} onClick={handlePayOrder} className={`px-4 py-2 rounded-lg text-white bg-gradient-to-r from-green-500 to-blue-600 ${topupLoading ? 'opacity-60 cursor-not-allowed' : ''}`}>{topupLoading ? 'Đang xử lý...' : 'Thanh toán'}</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Cancel Booking Modal */}
+            {cancelModalOpen && cancellingBooking && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold text-red-600">⚠️ Xác nhận hủy đơn</h3>
+                            <button onClick={() => !cancelLoading && setCancelModalOpen(false)} className="text-gray-500 hover:text-gray-700">✕</button>
+                        </div>
+                        
+                        <div className="space-y-4">
+                            {/* Booking Info */}
+                            <div className="bg-gray-50 rounded-lg p-4">
+                                <div className="text-sm space-y-2">
+                                    <div><span className="text-gray-600">Mã đơn:</span> <span className="font-mono font-medium">{cancellingBooking.id}</span></div>
+                                    <div><span className="text-gray-600">Thời gian:</span> <span className="font-medium">{cancellingBooking.startDate} → {cancellingBooking.endDate}</span></div>
+                                    <div><span className="text-gray-600">Tổng tiền:</span> <span className="font-medium">{formatNumberVN(cancellingBooking.totalPayment || 0)}đ</span></div>
+                                    <div><span className="text-gray-600">Trạng thái:</span> <span className={`px-2 py-1 rounded-full text-xs ${cancellingBooking.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>{cancellingBooking.status}</span></div>
+                                </div>
+                            </div>
+
+                            {/* Refund Info */}
+                            {(() => {
+                                const refundInfo = calculateRefund(cancellingBooking);
+                                return (
+                                    <div className={`rounded-lg p-4 ${refundInfo.percentage > 0 ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+                                        <h4 className="font-semibold mb-2">Thông tin hoàn tiền</h4>
+                                        <div className="text-sm space-y-1">
+                                            <div><span className="text-gray-600">Lý do:</span> <span className="font-medium">{refundInfo.reason}</span></div>
+                                            <div><span className="text-gray-600">Tỷ lệ hoàn:</span> <span className="font-bold text-lg">{refundInfo.percentage}%</span></div>
+                                            <div><span className="text-gray-600">Số tiền hoàn:</span> <span className="font-bold text-lg text-green-600">{formatNumberVN(refundInfo.amount)}đ</span></div>
+                                        </div>
+                                        {refundInfo.percentage === 0 && cancellingBooking.status === 'CONFIRMED' && (
+                                            <div className="mt-2 text-xs text-red-600">⚠️ Không được hoàn tiền do đã quá giờ nhận xe</div>
+                                        )}
+                                    </div>
+                                );
+                            })()}
+
+                            {/* Warning */}
+                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800">
+                                <strong>Lưu ý:</strong> Hành động này không thể hoàn tác. Số tiền hoàn (nếu có) sẽ được chuyển vào ví của bạn.
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end gap-2 mt-6">
+                            <button 
+                                onClick={() => !cancelLoading && setCancelModalOpen(false)} 
+                                className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50"
+                                disabled={cancelLoading}
+                            >
+                                Đóng
+                            </button>
+                            <button 
+                                onClick={handleCancelBooking}
+                                disabled={cancelLoading}
+                                className={`px-4 py-2 rounded-lg text-white bg-red-600 hover:bg-red-700 ${cancelLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+                            >
+                                {cancelLoading ? 'Đang hủy...' : 'Xác nhận hủy'}
+                            </button>
                         </div>
                     </div>
                 </div>

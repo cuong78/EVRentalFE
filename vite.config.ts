@@ -8,16 +8,16 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/ws': {
-        target: 'http://145.79.13.143:8080',
+        target: 'http://localhost:8080',
         changeOrigin: true,
         ws: true,
       },
       '/app': {
-        target: 'http://145.79.13.143:8080',
+        target: 'http://localhost:8080',
         changeOrigin: true,
       },
       '/topic': {
-        target: 'http://145.79.13.143:8080',
+        target: 'http://localhost:8080',
         changeOrigin: true,
       },
     },
