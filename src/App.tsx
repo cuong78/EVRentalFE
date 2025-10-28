@@ -17,7 +17,6 @@ import WalletTopupReturn from './pages/payment/WalletTopupReturn';
 import AdminPage from "./pages/admin/AdminPage";
 import UnauthorizedPage from "./pages/auth/UnauthorizedPage";
 // import { AuthDebugPanel } from "./components/debug/AuthDebugPanel";
-import { BackendStatus } from "./components/common/BackendStatus";
 import { AdminLayout } from './components/ui/admin/adminLayout';
 import { ErrorPage } from './pages/error';
 import { VehiclesManagementPage } from './pages/admin/vehiclesManagement/vehicles';
@@ -71,8 +70,6 @@ function App() {
                 </Route>
             </Routes>
             <ToastContainer />
-            {/* Backend status indicator */}
-            <BackendStatus />
             {/* Debug panel chỉ hiển thị trong development */}
             {/* {import.meta.env.DEV && <AuthDebugPanel />} */}
         </HashRouter>
