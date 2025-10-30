@@ -53,7 +53,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 console.error('❌ AuthContext: Error fetching user info:', error);
                 // Nếu API fail (token expired, etc), clear user
                 setUser(null);
-                tokenManager.removeToken();
+                tokenManager.clearToken();
             }
 
             setLoading(false);

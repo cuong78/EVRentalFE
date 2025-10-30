@@ -1,8 +1,7 @@
 import { Tabs, Tab, Box, Card, CardContent } from "@mui/material";
 import { useState } from "react";
-import { GenreListPage } from "../../genres-management/index.tsx";
-import { VehicleListPage } from "./index.tsx";
-import VersionManagementPage from "../../version-management/index";
+import { VehiclesManagementPage } from "./index.tsx";
+import VehicleTypesPage from "../../vehicleTypes/VehicleTypesPage";
 
 export default function VehicleManagementTabs () {
   const [value, setValue] = useState(0);
@@ -21,15 +20,14 @@ export default function VehicleManagementTabs () {
         indicatorColor="primary"
         sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}
       >
-        <Tab label="Phim" />
-        <Tab label="Thể loại" />
-        <Tab label="Phiên bản" />
+        <Tab label="Xe" />
+        <Tab label="Loại xe" />
       </Tabs>
 
       {value === 0 && (
         <Card sx={{ borderRadius: 4, boxShadow: 3 }}>
           <CardContent>
-            <VehicleListPage />
+            <VehiclesManagementPage />
           </CardContent>
         </Card>
       )}
@@ -37,15 +35,7 @@ export default function VehicleManagementTabs () {
       {value === 1 && (
         <Card sx={{ borderRadius: 4, boxShadow: 3 }}>
           <CardContent>
-            <GenreListPage />
-          </CardContent>
-        </Card>
-      )}
-
-      {value === 2 && (
-        <Card sx={{ borderRadius: 4, boxShadow: 3 }}>
-          <CardContent>
-            <VersionManagementPage />
+            <VehicleTypesPage />
           </CardContent>
         </Card>
       )}

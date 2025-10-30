@@ -664,6 +664,14 @@ const StaffPortal: React.FC = () => {
     return (
         <div className="container mx-auto px-6 py-10">
             <h1 className="text-2xl font-bold mb-6">Cổng nhân viên</h1>
+            {/* Quick links to shared manage pages */}
+            <div className="flex flex-wrap gap-2 mb-6">
+                <a href="#/manage/users" className="px-3 py-2 text-sm rounded-lg border border-gray-200 bg-white hover:bg-gray-50">Quản lý Users</a>
+                <a href="#/manage/staffs" className="px-3 py-2 text-sm rounded-lg border border-gray-200 bg-white hover:bg-gray-50">Quản lý Staff</a>
+                <a href="#/manage/reports/payments" className="px-3 py-2 text-sm rounded-lg border border-gray-200 bg-white hover:bg-gray-50">Báo cáo Payments</a>
+                <a href="#/manage/reports/contracts" className="px-3 py-2 text-sm rounded-lg border border-gray-200 bg-white hover:bg-gray-50">Báo cáo Contracts</a>
+                <a href="#/manage/reports/returns" className="px-3 py-2 text-sm rounded-lg border border-gray-200 bg-white hover:bg-gray-50">Báo cáo Returns</a>
+            </div>
             
             {/* Tabs */}
             <div className="mb-6 flex gap-2 border-b">

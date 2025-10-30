@@ -45,7 +45,7 @@ export function useAuth() {
     ) => {
         setIsLoading(true);
         try {
-            const res = await authService.login(data); // res: LoginResponse
+            const res = await authService.login(data); // res: LoginResponse { token, roles }
 
             if (!res?.token) {
                 showErrorToast("Đăng nhập thất bại: Không nhận được token");
@@ -56,9 +56,7 @@ export function useAuth() {
             localStorage.setItem("token", res.token);
             
             // Fetch thông tin user đầy đủ từ API profile
-            console.log("📡 Fetching user profile from API...");
             const profileData = await authService.getMyInfo();
-            console.log("👤 Profile data:", profileData);
             
             // Tạo user object từ profile API
             const userInfo = {
@@ -84,22 +82,16 @@ export function useAuth() {
 
             onSuccess?.();
             
-            // Debug: Log roles từ profile API
-            console.log("🔐 Profile API Roles:", userInfo.roles);
-            
             // Get role name - xử lý cả array of strings và array of objects
             const getRoleName = (roles: any[]) => {
                 if (!roles || roles.length === 0) return null;
                 const firstRole = roles[0];
-                // Nếu role là string trực tiếp (ví dụ: ["ADMIN"])
                 if (typeof firstRole === 'string') return firstRole;
-                // Nếu role là object với property roleName (ví dụ: [{roleName: "ADMIN"}])
                 if (typeof firstRole === 'object' && firstRole.roleName) return firstRole.roleName;
                 return null;
             };
             
             const roleName = getRoleName(userInfo.roles);
-            console.log("🔐 Role Name:", roleName);
             
             // Điều hướng sau đăng nhập
             const redirect = options?.redirectTo;
@@ -108,28 +100,11 @@ export function useAuth() {
             } else if (typeof redirect === 'string') {
                 navigate(redirect);
             } else {
-                // Mặc định: chuyển theo role từ profile API
-                if (roleName) {
-                    console.log("🔀 Redirecting based on role:", roleName);
-                    
-                    // Redirect dựa trên role
-                    if (roleName === "ADMIN") {
-                        console.log("➡️ Navigating to /admin");
-                        navigate("/admin");
-                    } else if (roleName === "STAFF") {
-                        console.log("➡️ Navigating to /staff");
-                        navigate("/staff");
-                    } else if (roleName === "CUSTOMER" || roleName === "MEMBER") {
-                        console.log("➡️ Navigating to /");
-                        navigate("/");
-                    } else {
-                        // Default cho các role khác
-                        console.log("➡️ Unknown role:", roleName, "- navigating to /");
-                        navigate("/");
-                    }
+                if (roleName === "ADMIN") {
+                    navigate("/admin");
+                } else if (roleName === "STAFF") {
+                    navigate("/staff");
                 } else {
-                    // Không có role thì về trang chủ
-                    console.log("⚠️ No roles found, navigating to /");
                     navigate("/");
                 }
             }
@@ -193,12 +168,9 @@ export function useAuth() {
             if (response.code === 200) {
                 const token = response.data.token;
                 localStorage.setItem("token", token);
-                console.log(token);
                 
                 // Fetch thông tin user đầy đủ từ API profile
-                console.log("📡 Fetching user profile from API (Google login)...");
                 const profileData = await authService.getMyInfo();
-                console.log("👤 Profile data (Google):", profileData);
                 
                 // Tạo user object từ profile API
                 const userInfo = {
@@ -220,42 +192,14 @@ export function useAuth() {
                 };
                 setUser(userInfo);
                 
-                // Debug: Log roles từ profile API
-                console.log("🔐 Profile API Roles (Google):", userInfo.roles);
-                
-                // Get role name - xử lý cả array of strings và array of objects
-                const getRoleName = (roles: any[]) => {
-                    if (!roles || roles.length === 0) return null;
-                    const firstRole = roles[0];
-                    // Nếu role là string trực tiếp (ví dụ: ["ADMIN"])
-                    if (typeof firstRole === 'string') return firstRole;
-                    // Nếu role là object với property roleName (ví dụ: [{roleName: "ADMIN"}])
-                    if (typeof firstRole === 'object' && firstRole.roleName) return firstRole.roleName;
-                    return null;
-                };
-                
-                const roleName = getRoleName(userInfo.roles);
-                console.log("🔐 Role Name (Google):", roleName);
-                
                 // Redirect dựa trên role từ profile API
-                if (roleName) {
-                    console.log("🔀 Redirecting based on role:", roleName);
-                    
-                    if (roleName === "ADMIN") {
-                        console.log("➡️ Navigating to /admin");
-                        navigate("/admin");
-                    } else if (roleName === "STAFF") {
-                        console.log("➡️ Navigating to /staff");
-                        navigate("/staff");
-                    } else if (roleName === "CUSTOMER" || roleName === "MEMBER") {
-                        console.log("➡️ Navigating to /");
-                        navigate("/");
-                    } else {
-                        console.log("➡️ Unknown role:", roleName, "- navigating to /");
-                        navigate("/");
-                    }
+                const firstRole = Array.isArray(userInfo.roles) && userInfo.roles.length ? userInfo.roles[0] : null;
+                const roleName = typeof firstRole === 'string' ? firstRole : firstRole?.roleName;
+                if (roleName === "ADMIN") {
+                    navigate("/admin");
+                } else if (roleName === "STAFF") {
+                    navigate("/staff");
                 } else {
-                    console.log("⚠️ No roles found, navigating to /");
                     navigate("/");
                 }
                 
