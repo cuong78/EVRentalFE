@@ -1,6 +1,7 @@
 import type { PermissionType } from "./permission";
 
 export interface Role {
+    name: string;
     roleId: number;
     roleName: "ADMIN" | "MANAGER" | "EMPLOYEE" | "MEMBER";
     permissions: PermissionType[]
