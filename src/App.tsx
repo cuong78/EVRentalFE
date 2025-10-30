@@ -15,7 +15,7 @@ import { ErrorPage } from './pages/error';
 import { VehiclesManagementPage } from './pages/admin/vehiclesManagement/vehicles';
 import VehicleTypesPage from './pages/admin/vehicleTypes/VehicleTypesPage';
 import RentalStationsPage from './pages/admin/rentalStations/RentalStationsPage';
-
+import AccountsManagementPage from './pages/admin/accounts/AccountsManagementPage';
 
 function App() {
     return (
@@ -37,6 +37,7 @@ function App() {
                     <Route path="vehicles" element={<VehiclesManagementPage />} />
                     <Route path="vehicle-types" element={<VehicleTypesPage />} />
                     <Route path="rental-stations" element={<RentalStationsPage />} />
+                    <Route path="accounts" element={<AccountsManagementPage />} />
                 </Route>
             </Routes>
             <ToastContainer />
