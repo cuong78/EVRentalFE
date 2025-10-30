@@ -27,6 +27,7 @@ const BookingConfirmation: React.FC = () => {
         }
     }, [bookingId]);
 
+<<<<<<< HEAD
     // Check for hash parameters and redirect to payment return if needed
     useEffect(() => {
         if (window.location.hash && window.location.hash.includes('?')) {
@@ -40,6 +41,8 @@ const BookingConfirmation: React.FC = () => {
         }
     }, []);
 
+=======
+>>>>>>> e20d11b0eca0826dcfba530ffe0c81341434fe9e
     // Debug log to check booking data
     useEffect(() => {
         if (booking) {
