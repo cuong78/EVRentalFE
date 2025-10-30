@@ -13,7 +13,7 @@ export const apiClient = axios.create({
     headers: {
         'Content-Type': 'application/json'
     },
-    withCredentials: true
+    withCredentials: false
 });
 
 export const apiPublicClient = axios.create({
@@ -37,7 +37,7 @@ apiClient.interceptors.request.use(
             }
         }
 
-        const token = tokenManager.getToken();
+        const token = tokenManager.getToken() || (typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null);
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }

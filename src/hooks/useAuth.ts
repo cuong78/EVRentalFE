@@ -4,6 +4,7 @@ import { authService } from "../service/authService.ts";
 import { showErrorToast, showSuccessToast } from "../utils/show-toast";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../contexts/auth-context.tsx";
+import { tokenManager } from "../utils/token-manager";
 
 export function useAuth() {
     const context = useContext(AuthContext);
@@ -11,9 +12,10 @@ export function useAuth() {
 
     const { user, setUser } = context;
     const token = localStorage.getItem("token");
-    const isAdmin = user?.roles[0]?.roleName === "ADMIN";
-    const isManager = user?.roles[0]?.roleName === "MANAGER";
-    const isEmployee = user?.roles[0]?.roleName === "EMPLOYEE";
+    const roleHas = (name: string) => (user?.roles || []).some(r => (r?.roleName || '').toUpperCase() === name);
+    const isAdmin = roleHas("ADMIN");
+    const isManager = roleHas("MANAGER");
+    const isEmployee = roleHas("EMPLOYEE");
 
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
@@ -48,8 +50,19 @@ export function useAuth() {
                 return null;
             }
 
-            // Lưu token vào localStorage
-            localStorage.setItem("token", res.token);
+            // Lưu token và lên lịch refresh
+            tokenManager.saveToken(res.token);
+            
+            // Giải mã token để lấy roles (backend không trả roles trong body)
+            const payload: any = tokenManager.decodeToken(res.token) || {};
+            const jwtRoles: string[] = Array.isArray(payload?.roles) ? payload.roles : [];
+            const normalizedRoles = jwtRoles.map((r) => {
+                const upper = r.toString().toUpperCase();
+                const noPrefix = upper.startsWith("ROLE_") ? upper.replace("ROLE_", "") : upper;
+                return { roleId: 0, roleName: noPrefix as any, permissions: [] };
+            });
+            const roleNames = normalizedRoles.map(r => r.roleName);
+            const isPrivileged = roleNames.some(n => n === 'ADMIN' || n === 'MANAGER' || n === 'EMPLOYEE');
             
             // Tạo user object từ token response (không cần gọi API getInfo)
             const userInfo = {
@@ -66,7 +79,7 @@ export function useAuth() {
                 memberScore: 0,
                 status: 'ACTIVE' as const,
                 deleted: false,
-                roles: res.roles || [],
+                roles: normalizedRoles,
                 permissions: []
             };
 
@@ -75,13 +88,11 @@ export function useAuth() {
 
             onSuccess?.();
             
-            // Chuyển hướng dựa trên role
-            if (res.roles && res.roles.length > 0) {
-                const roleName = res.roles[0].roleName;
-                if (roleName === "MEMBER") {
-                    navigate("/");
-                } else {
-                    navigate("/admin");
+            // Chuyển hướng dựa trên role (ưu tiên admin pages nếu có quyền)
+            if (isPrivileged) {
+                navigate("/admin");
+                if (!window.location.hash.includes("#/admin")) {
+                    window.location.hash = "#/admin";
                 }
             } else {
                 navigate("/");

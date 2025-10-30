@@ -8,9 +8,30 @@ export const BackendStatus: React.FC = () => {
     const checkBackendStatus = async () => {
         setStatus('checking');
         try {
-            // Sử dụng XMLHttpRequest để test connection
+            // Sử dụng XMLHttpRequest để test connection tới API.BASE thay vì hardcode localhost
+            const base = API.BASE;
+            if (!base) {
+                setStatus('disconnected');
+                setLastCheck(new Date());
+                return;
+            }
+
+            const swaggerUrlEnv = (import.meta as any).env?.VITE_SWAGGER_URL as string | undefined;
+            let testUrl = '';
+            if (swaggerUrlEnv) {
+                testUrl = swaggerUrlEnv;
+            } else {
+                let origin = '';
+                try {
+                    const url = new URL(base);
+                    origin = `${url.protocol}//${url.host}`;
+                } catch {
+                    origin = base.replace(/\/api\/?$/, '');
+                }
+                testUrl = `${origin}/swagger-ui/index.html`;
+            }
             const xhr = new XMLHttpRequest();
-            xhr.open('GET', 'http://localhost:8080/swagger-ui/index.html', true);
+            xhr.open('GET', testUrl, true);
             xhr.timeout = 5000; // 5 seconds timeout
             
             xhr.onload = () => {

@@ -16,6 +16,14 @@ import { VehiclesManagementPage } from './pages/admin/vehiclesManagement/vehicle
 import VehicleTypesPage from './pages/admin/vehicleTypes/VehicleTypesPage';
 import RentalStationsPage from './pages/admin/rentalStations/RentalStationsPage';
 import AccountsManagementPage from './pages/admin/accounts/AccountsManagementPage';
+import PromotionsPage from './pages/admin/promotions/PromotionsPage';
+import BookingManagementPage from './pages/admin/booking/BookingManagementPage';
+import OrderHistoryPage from './pages/admin/orderHistory/OrderHistoryPage';
+import DocumentsManagementPage from './pages/admin/documents/DocumentsManagementPage';
+import PaymentManagementPage from './pages/admin/paymentManagement/PaymentManagementPage';
+import ContractManagementPage from './pages/admin/contract/ContractManagementPage';
+import ReturnTransactionsPage from './pages/admin/returnTransaction/ReturnTransactionsPage';
+import FeedbackManagementPage from './pages/admin/feedback/FeedbackManagementPage';
 
 function App() {
     return (
@@ -38,6 +46,14 @@ function App() {
                     <Route path="vehicle-types" element={<VehicleTypesPage />} />
                     <Route path="rental-stations" element={<RentalStationsPage />} />
                     <Route path="accounts" element={<AccountsManagementPage />} />
+                    <Route path="promotions" element={<PromotionsPage />} />
+                    <Route path="booking" element={<BookingManagementPage />} />
+                    <Route path="order-history" element={<OrderHistoryPage />} />
+                    <Route path="documents" element={<DocumentsManagementPage />} />
+                    <Route path="payment-management" element={<PaymentManagementPage />} />
+                    <Route path="contract" element={<ContractManagementPage />} />
+                    <Route path="return-transaction" element={<ReturnTransactionsPage />} />
+                    <Route path="feedback" element={<FeedbackManagementPage />} />
                 </Route>
             </Routes>
             <ToastContainer />

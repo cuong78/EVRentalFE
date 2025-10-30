@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { userAdminService, type AdminUserDTO } from '../../../service/userAdminService';
 import { showErrorToast, showSuccessToast } from '../../../utils/show-toast';
+import { tokenManager } from '../../../utils/token-manager';
 
 const AccountsManagementPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -24,9 +25,11 @@ const AccountsManagementPage: React.FC = () => {
   };
 
   useEffect(() => {
+    const token = tokenManager.getToken();
+    if (!token) return; // Chỉ fetch khi đã có token
     fetchUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, size]);
+  }, [page, size, tokenManager.getToken()]);
 
   const onSearch = () => {
     setPage(0);
