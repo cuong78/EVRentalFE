@@ -1,9 +1,39 @@
-import { number } from "framer-motion";
-import type { SalesTrend } from "./booking";
-import type { TopSellingMovie } from "./movie";
-import type { AverageRatingDashBoard } from "./rating";
-import type { OccupancyRoomRate } from "./room";
-import type { ShowtimePerformances } from "./showtime";
+// Self-contained type definitions for dashboard
+export interface SalesTrend {
+  date: string;
+  orders: number;
+  revenue: number;
+}
+
+export interface TopSellingMovie {
+  movieId?: number;
+  movieNameVi: string;
+  averageRating: number;
+  quantityTickets: number;
+  totalRevenue: number;
+}
+
+export interface AverageRatingDashBoard {
+  averageRating: number;
+  totalRatings: number;
+}
+
+export interface OccupancyRoomRate {
+  occupancyRate: number; // overall percentage
+  totalSeats: number;
+  occupiedSeats: number;
+  roomDetails?: Array<{
+    roomName: string;
+    screenType: string;
+    occupancyRate: number; // percentage per room
+  }>;
+}
+
+export interface ShowtimePerformances {
+  startTime: string; // e.g. "14:30"
+  totalTickets: number;
+  totalRevenue: number;
+}
 
 interface TodayShowtimeStats {
   todayShows: number;
@@ -40,7 +70,8 @@ export interface RevenueReportDTO {
 
 
 export interface MovieRevenueReport {
-  topSellingMovie: TopSellingMovie[];
+  // Recharts Pie expects ChartDataInput[], relax typing to be compatible
+  topSellingMovie: Array<Record<string, any>>;
 }
 
 export interface PerformanceTimeChart {

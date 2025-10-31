@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { returnTransactionService } from '../../service/returnTransactionService';
 import { documentService } from '../../service/documentService';
 import { authService } from '../../service/authService';
+import { kycService } from '../../service/kycService';
 import jsQR from 'jsqr';
 
 interface AvailableChoice {
@@ -44,6 +45,7 @@ const StaffPortal: React.FC = () => {
     const [docUserPhone, setDocUserPhone] = useState('');
     const [docType, setDocType] = useState('CCCD');
     const [docNumber, setDocNumber] = useState('');
+    const [docUsername, setDocUsername] = useState('');
     const [frontPhoto, setFrontPhoto] = useState<File | null>(null);
     const [backPhoto, setBackPhoto] = useState<File | null>(null);
     const [issueDate, setIssueDate] = useState('');
@@ -52,6 +54,15 @@ const StaffPortal: React.FC = () => {
     const [isDefault, setIsDefault] = useState(true);
     const frontPhotoInputRef = useRef<HTMLInputElement | null>(null);
     const backPhotoInputRef = useRef<HTMLInputElement | null>(null);
+    // KYC extracted fields (display all except kycLogId and status)
+    const [kycFrontImageUrl, setKycFrontImageUrl] = useState<string>('');
+    const [kycBackImageUrl, setKycBackImageUrl] = useState<string>('');
+    const [kycFullName, setKycFullName] = useState<string>('');
+    const [kycDateOfBirth, setKycDateOfBirth] = useState<string>('');
+    const [kycGender, setKycGender] = useState<string>('');
+    const [kycNationality, setKycNationality] = useState<string>('');
+    const [kycPlaceOfOrigin, setKycPlaceOfOrigin] = useState<string>('');
+    const [kycPlaceOfResidence, setKycPlaceOfResidence] = useState<string>('');
     
     // Document search states
     const [searchPhone, setSearchPhone] = useState('');
@@ -75,6 +86,9 @@ const StaffPortal: React.FC = () => {
     const [editIsDefault, setEditIsDefault] = useState(false);
     const editFrontPhotoInputRef = useRef<HTMLInputElement | null>(null);
     const editBackPhotoInputRef = useRef<HTMLInputElement | null>(null);
+    
+    // KYC extraction states
+    const [extractingKyc, setExtractingKyc] = useState(false);
 
     // QR Scanner states
     const [qrScannerOpen, setQrScannerOpen] = useState(false);
@@ -167,6 +181,61 @@ const StaffPortal: React.FC = () => {
         setDocType(type);
         // CCCD is default, others are not
         setIsDefault(type === 'CCCD');
+    };
+    
+    // Extract CCCD info using KYC API
+    const handleExtractCCCD = async () => {
+        if (!frontPhoto || !backPhoto) {
+            showErrorToast('Vui lòng chọn ảnh mặt trước và mặt sau');
+            return;
+        }
+        
+        try {
+            setExtractingKyc(true);
+            const response = await kycService.extractCCCD(frontPhoto, backPhoto);
+            // response may contain: frontImageUrl, backImageUrl, kycLogId, cccdInfo, status
+            if (response) {
+                // set image URLs if present
+                if (response.frontImageUrl) setKycFrontImageUrl(response.frontImageUrl);
+                if (response.backImageUrl) setKycBackImageUrl(response.backImageUrl);
+
+                if (response.cccdInfo) {
+                    const info = response.cccdInfo;
+
+                    // Populate form fields with extracted data
+                    setDocNumber(info.id || '');
+                    setIssueDate(formatDateForInput(info.issueDate || ''));
+                    setExpiryDate(formatDateForInput(info.expiryDate || ''));
+                    setIssuedBy(info.issuedBy || '');
+
+                    // Populate additional fields for display
+                    setKycFullName(info.fullName || '');
+                    setKycDateOfBirth(info.dateOfBirth || '');
+                    setKycGender(info.gender || '');
+                    setKycNationality(info.nationality || '');
+                    setKycPlaceOfOrigin(info.placeOfOrigin || '');
+                    setKycPlaceOfResidence(info.placeOfResidence || '');
+                }
+
+                showSuccessToast('Trích xuất thông tin CCCD thành công!');
+            } else {
+                showErrorToast('Không thể trích xuất thông tin từ ảnh CCCD');
+            }
+        } catch (e: any) {
+            showErrorToast(e?.response?.data?.message || e?.message || 'Lỗi trích xuất thông tin CCCD');
+        } finally {
+            setExtractingKyc(false);
+        }
+    };
+    
+    // Helper to format date from DD/MM/YYYY to YYYY-MM-DD
+    const formatDateForInput = (dateStr: string): string => {
+        if (!dateStr) return '';
+        const parts = dateStr.split('/');
+        if (parts.length === 3) {
+            return `${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+        return dateStr;
     };
     
     const handleDocumentUpload = async () => {
@@ -594,8 +663,7 @@ const StaffPortal: React.FC = () => {
 
     return (
         <div className="container mx-auto px-6 py-10">
-            <h1 className="text-2xl font-bold mb-6">Cổng nhân viên</h1>
-            
+            <h1 className="text-2xl font-bold mb-6">Cổng nhân viên</h1>          
             {/* Tabs */}
             <div className="mb-6 flex gap-2 border-b">
                 <button
@@ -1008,6 +1076,45 @@ const StaffPortal: React.FC = () => {
                                 />
                             </div>
 
+                            {/* KYC extracted data (read-only / preview) */}
+                            {(kycFullName || kycFrontImageUrl || kycBackImageUrl) && (
+                                <div className="bg-gray-50 border border-gray-100 rounded-lg p-3">
+                                    {/* <div className="text-sm text-gray-600 mb-2 font-semibold">Dữ liệu trích xuất (KYC) — có thể chỉnh sửa</div> */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        <div>
+                                            <label className="block text-xs text-gray-500">Họ và tên</label>
+                                            <input type="text" value={kycFullName} onChange={(e) => setKycFullName(e.target.value)} className="w-full text-sm border border-gray-200 rounded px-2 py-1" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-gray-500">Ngày sinh</label>
+                                            <input type="text" value={kycDateOfBirth} onChange={(e) => setKycDateOfBirth(e.target.value)} className="w-full text-sm border border-gray-200 rounded px-2 py-1" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-gray-500">Giới tính</label>
+                                            <input type="text" value={kycGender} onChange={(e) => setKycGender(e.target.value)} className="w-full text-sm border border-gray-200 rounded px-2 py-1" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-gray-500">Quốc tịch</label>
+                                            <input type="text" value={kycNationality} onChange={(e) => setKycNationality(e.target.value)} className="w-full text-sm border border-gray-200 rounded px-2 py-1" />
+                                        </div>
+                                        <div className="sm:col-span-2">
+                                            <label className="block text-xs text-gray-500">Nơi sinh</label>
+                                            <input type="text" value={kycPlaceOfOrigin} onChange={(e) => setKycPlaceOfOrigin(e.target.value)} className="w-full text-sm border border-gray-200 rounded px-2 py-1" />
+                                        </div>
+                                        <div className="sm:col-span-2">
+                                                                            <label className="block text-xs text-gray-500">Nơi cư trú</label>
+                                                                            <input type="text" value={kycPlaceOfResidence} onChange={(e) => setKycPlaceOfResidence(e.target.value)} className="w-full text-sm border border-gray-200 rounded px-2 py-1" />
+                                                                        </div>
+
+                                                                        {/* Document fields are editable in the main form below; duplicates removed here */}
+                                                                        <div className="sm:col-span-2">
+                                                                            {/* Images are shown in the photo upload area on the right — no duplicate preview here */}
+                                                                            {/* <div className="text-xs text-gray-400">Ảnh được hiển thị ở phần bên phải</div> */}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                            )}
+
                             <div>
                                 <label className="block text-sm text-gray-600 mb-1">Loại giấy tờ <span className="text-red-500">*</span></label>
                                 <select 
@@ -1015,10 +1122,7 @@ const StaffPortal: React.FC = () => {
                                     onChange={(e) => handleDocTypeChange(e.target.value)} 
                                     className="w-full border border-gray-200 rounded-lg px-3 py-2"
                                 >
-                                    <option value="CMND">CMND (Chứng minh nhân dân)</option>
                                     <option value="CCCD">CCCD (Căn cước công dân)</option>
-                                    <option value="PASSPORT">Hộ chiếu</option>
-                                    <option value="DRIVER_LICENSE">Giấy phép lái xe</option>
                                 </select>
                                 {docType === 'CCCD' && (
                                     <div className="mt-1 text-xs text-green-600">✓ CCCD sẽ tự động được đặt làm giấy tờ mặc định</div>
@@ -1197,6 +1301,29 @@ const StaffPortal: React.FC = () => {
                         </div>
                     </div>
 
+                    {/* KYC Extract Button */}
+                    {frontPhoto && backPhoto && docType === 'CCCD' && (
+                        <div className="mt-4 flex justify-center">
+                            <button 
+                                onClick={handleExtractCCCD}
+                                disabled={extractingKyc}
+                                className={`px-6 py-3 rounded-lg text-white font-semibold flex items-center gap-2 ${extractingKyc ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+                            >
+                                {extractingKyc ? (
+                                    <>
+                                        <span className="animate-spin">⏳</span>
+                                        Đang trích xuất...
+                                    </>
+                                ) : (
+                                    <>
+                                        <span>🤖</span>
+                                        Trích xuất thông tin CCCD
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    )}
+
                     <div className="mt-6 flex gap-3">
                         <button 
                             onClick={handleDocumentUpload}
@@ -1216,6 +1343,15 @@ const StaffPortal: React.FC = () => {
                                 setExpiryDate('');
                                 setIssuedBy('');
                                 setIsDefault(true);
+                                // clear KYC extracted fields
+                                setKycFrontImageUrl('');
+                                setKycBackImageUrl('');
+                                setKycFullName('');
+                                setKycDateOfBirth('');
+                                setKycGender('');
+                                setKycNationality('');
+                                setKycPlaceOfOrigin('');
+                                setKycPlaceOfResidence('');
                             }}
                             className="px-6 py-3 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
                         >
@@ -1429,10 +1565,7 @@ const StaffPortal: React.FC = () => {
                                                 onChange={(e) => setEditDocType(e.target.value)} 
                                                 className="w-full border border-gray-200 rounded-lg px-3 py-2"
                                             >
-                                                <option value="CMND">CMND (Chứng minh nhân dân)</option>
                                                 <option value="CCCD">CCCD (Căn cước công dân)</option>
-                                                <option value="PASSPORT">Hộ chiếu</option>
-                                                <option value="DRIVER_LICENSE">Giấy phép lái xe</option>
                                             </select>
                                         </div>
 

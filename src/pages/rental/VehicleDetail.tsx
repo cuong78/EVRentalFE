@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
-import { Battery, MapPin, Clock } from 'lucide-react';
+import { Battery, MapPin, Clock, Users, Zap, Gauge, Package, Car, Settings, Shield, Navigation } from 'lucide-react';
 import { formatNumberVN } from '../../utils/format';
 import { useAuth } from '../../hooks/useAuth';
 import LoginPopup from '../../components/auth/login/LoginPopup';
@@ -57,6 +57,121 @@ const VehicleDetail: React.FC = () => {
             case 'electric car': return ['Điều hòa', 'GPS', 'Bluetooth'];
             default: return ['GPS', 'Sạc nhanh'];
         }
+    };
+
+    // Get detailed specifications for each vehicle type
+    const getVehicleSpecs = (typeName: string) => {
+        const name = typeName.toLowerCase();
+        
+        // VinFast VF 3
+        if (name.includes('vf 3') || name.includes('vf3')) {
+            return {
+                category: 'Minicar',
+                seats: '4 chỗ',
+                transmission: 'Số tự động',
+                horsepower: '43 HP',
+                trunk: '285L',
+                range: '210km (NEDC)',
+                airbags: '1 túi khí',
+                limit: 'Giới hạn di chuyển 300 km/ngày'
+            };
+        }
+        
+        // VinFast VF 5
+        if (name.includes('vf 5') || name.includes('vf5')) {
+            return {
+                category: 'A-SUV',
+                seats: '5 chỗ',
+                transmission: 'Số tự động',
+                horsepower: '134 HP',
+                trunk: '310L',
+                range: '326km (NEDC)',
+                airbags: '4 túi khí',
+                limit: 'Giới hạn di chuyển 350 km/ngày'
+            };
+        }
+        
+        // VinFast VF 6
+        if (name.includes('vf 6') || name.includes('vf6')) {
+            return {
+                category: 'B-SUV',
+                seats: '5 chỗ',
+                transmission: 'Số tự động',
+                horsepower: '174 HP',
+                trunk: '423L',
+                range: '460km (NEDC)',
+                airbags: '6 túi khí',
+                limit: 'Giới hạn di chuyển 450 km/ngày'
+            };
+        }
+        
+        // VinFast VF 7
+        if (name.includes('vf 7') || name.includes('vf7')) {
+            return {
+                category: 'C-SUV',
+                seats: '5 chỗ',
+                transmission: 'Số tự động',
+                horsepower: '201 HP',
+                trunk: '520L',
+                range: '450km (NEDC)',
+                airbags: '8 túi khí',
+                limit: 'Giới hạn di chuyển 450 km/ngày'
+            };
+        }
+        
+        // VinFast VF 8
+        if (name.includes('vf 8') || name.includes('vf8')) {
+            return {
+                category: 'E-SUV',
+                seats: '5 chỗ',
+                transmission: 'Số tự động',
+                horsepower: '349 HP',
+                trunk: '593L',
+                range: '471km (NEDC)',
+                airbags: '11 túi khí',
+                limit: 'Giới hạn di chuyển 470 km/ngày'
+            };
+        }
+        
+        // VinFast VF 9
+        if (name.includes('vf 9') || name.includes('vf9')) {
+            return {
+                category: 'E-SUV',
+                seats: '7 chỗ',
+                transmission: 'Số tự động',
+                horsepower: '408 HP',
+                trunk: '423L',
+                range: '438km (NEDC)',
+                airbags: '11 túi khí',
+                limit: 'Giới hạn di chuyển 430 km/ngày'
+            };
+        }
+        
+        // VinFast VF e34
+        if (name.includes('e34')) {
+            return {
+                category: 'B-SUV',
+                seats: '5 chỗ',
+                transmission: 'Số tự động',
+                horsepower: '110 HP',
+                trunk: '298L',
+                range: '300km (NEDC)',
+                airbags: '4 túi khí',
+                limit: 'Giới hạn di chuyển 300 km/ngày'
+            };
+        }
+        
+        // Default
+        return {
+            category: 'Xe điện',
+            seats: '2-5 chỗ',
+            transmission: 'Số tự động',
+            horsepower: '50+ HP',
+            trunk: 'Có sẵn',
+            range: '100km+',
+            airbags: '2+ túi khí',
+            limit: 'Giới hạn di chuyển 200 km/ngày'
+        };
     };
 
     const slugify = (s: string) => (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -186,17 +301,86 @@ const VehicleDetail: React.FC = () => {
                         </div>
                     </div>
 
+                    {/* Thông tin cần có khi nhận xe */}
                     <div className="mt-8 bg-white rounded-2xl p-6 shadow">
-                        <h3 className="text-xl font-bold mb-4">Điều kiện thuê xe</h3>
+                        <h3 className="text-xl font-bold mb-4">Thông tin cần có khi nhận xe</h3>
+                        <ul className="list-disc pl-5 text-gray-700 space-y-2">
+                            <li>CCCD hoặc Hộ chiếu còn thời hạn</li>
+                            <li>Bằng lái hợp lệ, còn thời hạn</li>
+                        </ul>
+                    </div>
+
+                    {/* Hình thức thanh toán */}
+                    <div className="mt-6 bg-white rounded-2xl p-6 shadow">
+                        <h3 className="text-xl font-bold mb-4">Hình thức thanh toán</h3>
+                        <ul className="list-disc pl-5 text-gray-700 space-y-2">
+                            <li>Trả trước</li>
+                            <li>Thời hạn thanh toán: đặt cọc giữ xe thanh toán 100% khi kí hợp đồng và nhận xe</li>
+                        </ul>
+                    </div>
+
+                    {/* Chính sách đặt cọc */}
+                    <div className="mt-6 bg-white rounded-2xl p-6 shadow">
+                        <h3 className="text-xl font-bold mb-4">Chính sách đặt cọc (thế chân)</h3>
                         <ul className="list-disc pl-5 text-gray-700">
-                            <li>Chứng minh nhân dân/CCCD hoặc Hộ chiếu còn hạn</li>
-                            <li>Bằng lái hợp lệ</li>
-                            <li>Đặt cọc theo mức quy định</li>
+                            <li>
+                                Khách hàng phải thanh toán số tiền cọc là{' '}
+                                <span className="font-bold text-green-600">
+                                    {formatNumberVN((selected.depositAmount || 0).toString())}đ
+                                </span>
+                            </li>
                         </ul>
                     </div>
                 </div>
 
                 <aside className="bg-white rounded-2xl p-6 shadow">
+                    {/* Vehicle Specifications */}
+                    <div className="mb-6 pb-6 border-b border-gray-200">
+                        <h3 className="font-bold text-lg mb-4">Thông số kỹ thuật</h3>
+                        <div className="grid grid-cols-2 gap-3">
+                            {(() => {
+                                const specs = getVehicleSpecs(selected.type);
+                                return (
+                                    <>
+                                        <div className="flex items-start">
+                                            <Users className="w-4 h-4 mr-2 mt-1 text-gray-600 flex-shrink-0" />
+                                            <span className="text-sm text-gray-700">{specs.seats}</span>
+                                        </div>
+                                        <div className="flex items-start">
+                                            <Zap className="w-4 h-4 mr-2 mt-1 text-gray-600 flex-shrink-0" />
+                                            <span className="text-sm text-gray-700">{specs.range}</span>
+                                        </div>
+                                        <div className="flex items-start">
+                                            <Settings className="w-4 h-4 mr-2 mt-1 text-gray-600 flex-shrink-0" />
+                                            <span className="text-sm text-gray-700">{specs.transmission}</span>
+                                        </div>
+                                        <div className="flex items-start">
+                                            <Shield className="w-4 h-4 mr-2 mt-1 text-gray-600 flex-shrink-0" />
+                                            <span className="text-sm text-gray-700">{specs.airbags}</span>
+                                        </div>
+                                        <div className="flex items-start">
+                                            <Gauge className="w-4 h-4 mr-2 mt-1 text-gray-600 flex-shrink-0" />
+                                            <span className="text-sm text-gray-700">{specs.horsepower}</span>
+                                        </div>
+                                        <div className="flex items-start">
+                                            <Car className="w-4 h-4 mr-2 mt-1 text-gray-600 flex-shrink-0" />
+                                            <span className="text-sm text-gray-700">{specs.category}</span>
+                                        </div>
+                                        <div className="flex items-start">
+                                            <Package className="w-4 h-4 mr-2 mt-1 text-gray-600 flex-shrink-0" />
+                                            <span className="text-sm text-gray-700">{specs.trunk}</span>
+                                        </div>
+                                        <div className="flex items-start col-span-2">
+                                            <Navigation className="w-4 h-4 mr-2 mt-1 text-gray-600 flex-shrink-0" />
+                                            <span className="text-sm text-gray-700">{specs.limit}</span>
+                                        </div>
+                                    </>
+                                );
+                            })()}
+                        </div>
+                    </div>
+
+                    {/* Price and Action Buttons */}
                     <div className="mb-4">
                         <div className="text-sm text-gray-500">Giá</div>
                         <div className="text-2xl font-bold text-green-600">{formatNumberVN(selected.price)}</div>
