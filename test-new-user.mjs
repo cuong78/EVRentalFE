@@ -9,7 +9,7 @@ const newUser = {
     confirmPassword: "password123"
 };
 
-const API_BASE = 'http://145.79.13.143:8080/api';
+const API_BASE = 'http://localhost:8080/api';
 
 console.log('🔍 Testing New User Registration...');
 console.log('📧 Using email:', newUser.email);
@@ -79,7 +79,7 @@ async function testNewUserFlow() {
         console.log('- Use the verification endpoint with the code');
         
         console.log('');
-        console.log('🌐 Or test via Frontend: http://localhost:3000');
+        console.log('🌐 Or test via Frontend: http://localhost:5173');
         console.log('   - Register with the same credentials');
         console.log('   - Check email for verification');
         console.log('   - Complete verification flow');

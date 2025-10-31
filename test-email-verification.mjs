@@ -3,7 +3,7 @@
 
 import axios from 'axios';
 
-const API_BASE = 'http://145.79.13.143:8080/api';
+const API_BASE = 'http://localhost:8080/api';
 
 async function testEmailVerificationFlow() {
     console.log('🔍 Testing Email Verification Flow...\n');
@@ -110,7 +110,7 @@ async function testEmailVerificationFlow() {
     console.log('2. Check email for verification link/code');
     console.log('3. Verify email');
     console.log('4. Login successfully');
-    console.log('\n🌐 Test via Frontend: http://localhost:3000');
+    console.log('\n🌐 Test via Frontend: http://localhost:5173');
 }
 
 // Run the test
