@@ -45,7 +45,7 @@ export function useAuth() {
     ) => {
         setIsLoading(true);
         try {
-            const res = await authService.login(data); // res: LoginResponse { token, roles }
+            const res = await authService.login(data); // res: LoginResponse
 
             if (!res?.token) {
                 showErrorToast("Đăng nhập thất bại: Không nhận được token");

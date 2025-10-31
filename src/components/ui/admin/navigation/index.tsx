@@ -30,13 +30,6 @@ export const Navigation = ({ collapsed = false }: NavigationProps) => {
     { label: "Quản Lý Hợp Đồng", href: "/admin/contract", icon: <FaFileContract /> },
     { label: "Quản Lý Hoàn Trả", href: "/admin/return-transaction", icon: <FaUndoAlt /> },
 
-    // Khu dùng chung (ADMIN & STAFF)
-    { label: "Quản Lý Users (Chung)", href: "/manage/users", icon: <FaUsersCog /> },
-    { label: "Quản Lý Staff (Chung)", href: "/manage/staffs", icon: <FaUsersCog /> },
-    { label: "Báo cáo Payments (Chung)", href: "/manage/reports/payments", icon: <FaMoneyBillWave /> },
-    { label: "Báo cáo Contracts (Chung)", href: "/manage/reports/contracts", icon: <FaFileContract /> },
-    { label: "Báo cáo Returns (Chung)", href: "/manage/reports/returns", icon: <FaUndoAlt /> },
-
   ];
 
   return (

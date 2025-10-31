@@ -18,7 +18,7 @@ export interface StationResponse {
 export const stationService = {
   getAllStations: async (): Promise<StationResponse> => {
     try {
-      const response = await apiClient.get(`/rental-stations`);
+      const response = await apiClient.get(`${API.BASE}/rental-stations`);
       return response.data;
     } catch (error) {
       console.error('Failed to fetch stations:', error);
@@ -28,7 +28,7 @@ export const stationService = {
 
   getStationById: async (id: number): Promise<Station> => {
     try {
-      const response = await apiClient.get(`/rental-stations/${id}`);
+      const response = await apiClient.get(`${API.BASE}/rental-stations/${id}`);
       return response.data;
     } catch (error) {
       console.error(`Failed to fetch station ${id}:`, error);
@@ -38,7 +38,7 @@ export const stationService = {
   ,
   getStationsByCity: async (city: string): Promise<StationResponse> => {
     try {
-      const response = await apiClient.get(`/rental-stations/city/${encodeURIComponent(city)}`);
+      const response = await apiClient.get(`${API.BASE}/rental-stations/city/${encodeURIComponent(city)}`);
       return response.data;
     } catch (error) {
       console.error(`Failed to fetch stations by city ${city}:`, error);

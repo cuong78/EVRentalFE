@@ -26,11 +26,6 @@ import DocumentManagementPage from './pages/admin/documents/DocumentManagementPa
 import QRGenerator from './pages/admin/QRGenerator';
 import BookingManagementPage from './pages/admin/bookings/BookingManagementPage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
-import UsersPage from './pages/manage/UsersPage';
-import StaffsPage from './pages/manage/StaffsPage';
-import PaymentsListPage from './pages/manage/PaymentsListPage';
-import ContractsListPage from './pages/manage/ContractsListPage';
-import ReturnsListPage from './pages/manage/ReturnsListPage';
 
 
 function App() {
@@ -73,32 +68,6 @@ function App() {
                     <Route path="documents" element={<DocumentManagementPage />} />
                     <Route path="qr-generator" element={<QRGenerator />} />
                 </Route>
-                {/* shared manage routes for ADMIN & STAFF */}
-                <Route path="/manage/users" element={
-                    <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
-                        <UsersPage />
-                    </ProtectedRoute>
-                } />
-                <Route path="/manage/staffs" element={
-                    <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
-                        <StaffsPage />
-                    </ProtectedRoute>
-                } />
-                <Route path="/manage/reports/payments" element={
-                    <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
-                        <PaymentsListPage />
-                    </ProtectedRoute>
-                } />
-                <Route path="/manage/reports/contracts" element={
-                    <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
-                        <ContractsListPage />
-                    </ProtectedRoute>
-                } />
-                <Route path="/manage/reports/returns" element={
-                    <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
-                        <ReturnsListPage />
-                    </ProtectedRoute>
-                } />
             </Routes>
             <ToastContainer />
             {/* Debug panel chỉ hiển thị trong development */}
